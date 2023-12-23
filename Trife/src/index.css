@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.somelement {
+  position: absolute;
+  left: 50%;
+  bottom: -15px;
+  -webkit-transform: translateX(-50%);
+  transform: translateX(-50%)
+}
+
+.StyledNodeNormal{
+  padding: 5px;
+  border-radius: 8px;
+  display: inline-block;
+  text-align: center;
+  border: 2px solid #b794ec;
+  background: #DBCDF0;
+  color: #a678ec;
+  font-weight: bold;
+  position: relative;
+  width: 180px;
+  height: 70px;
+}
+
+.moodNormal{
+  border: 2px solid #b794ec;
+  background: #DBCDF0;
+}
+
+.StyledNodeResultMedium{
+  padding: 5px;
+  border-radius: 8px;
+  display: inline-block;
+  border: 2px solid #d6b04e;
+  background: #FAEDCB;
+  color: #caa23c;
+  font-weight: bold;
+  position: relative;
+  width: 180px;
+  height: 70px;
+}
+
+.moodMedium{
+  border: 2px solid #d6b04e;
+  background: #FAEDCB;
+}
+
+.StyledNodeResultGood{
+  padding: 5px;
+  border-radius: 8px;
+  display: inline-block;
+  border: 2px solid #7ee695;
+  background: #BAFFC9;
+  color: #63e27e;
+  font-weight: bold;
+  position: relative;
+  width: 180px;
+  height: 70px;
+}
+
+.moodGood{
+  border: 2px solid #7ee695;
+  background: #BAFFC9;
+}
+
+.StyledNodeResultBad{
+  padding: 5px;
+  border-radius: 8px;
+  display: inline-block;
+  border: 2px solid #c25661;
+  background: #FFB3BA;
+  color: #dd4e5c;
+  font-weight: bold;
+  position: relative;
+  width: 180px;
+  height: 70px;
+}
+
+.moodBad{
+  border: 2px solid #c25661;
+  background: #FFB3BA;
+}
+
+.StyledNodeDiet{
+  padding: 5px;
+  border-radius: 8px;
+  display: inline-block;
+  border: 2px solid #75a9d4;
+  background: #C6DEF1;
+  color: #6ea8d7;
+  font-weight: bold;
+  position: relative;
+  width: 180px;
+  height: 70px;
+}
+
+.StyledNodeFinances{
+  padding: 5px;
+  border-radius: 8px;
+  display: inline-block;
+  border: 2px solid #ee90c4;
+  background: #F2C6DE;
+  color: #e17db4;
+  font-weight: bold;
+  position: relative;
+  width: 180px;
+  height: 70px;
+}
