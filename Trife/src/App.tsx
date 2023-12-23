@@ -14,7 +14,8 @@ type node = {
   children: node[];
   nodeStyle?: string
   moodStyle?: string
-  isRoot: boolean
+  isRoot: boolean,
+  moods: string[]
 }
 
 function App() {
@@ -23,11 +24,12 @@ function App() {
     id: -1,
     date: "01/01/01",
     node: {
-      value: "Start",
+      value: "Start 1",
       children: [],
       nodeStyle: "StyledNodeNormal",
       moodStyle: "moodNormal",
-      isRoot: true
+      isRoot: true,
+      moods: []
     }
   }
 
@@ -35,11 +37,12 @@ function App() {
     id: 0,
     date: "02/01/01",
     node: {
-      value: "Start",
+      value: "Start 2",
       children: [],
       nodeStyle: "StyledNodeNormal",
       moodStyle: "moodNormal",
-      isRoot: true
+      isRoot: true,
+      moods: []
     }
   }
 

@@ -24,6 +24,7 @@ import {
 //! Add project tags to nodes & context menu
 //! Add editing to nodes
 //! Make a new page with a default start tree when the next day arrives
+//! Change Line Style
 
 //! FUTURE -> store trees in firebase or some storage
 //! Add themes (e.g: Pastel, Dark Mode, Dracula, Galaxy, Studio Ghibli)
@@ -35,19 +36,19 @@ const Node = ({node, showTree, pages, setPages, pagePtr}) => {
     
     const [choice, setChoice] = useState<number>(0)
     const [nodeText, setNodeText] = useState<string>("");
-    const [moods, setMoods] = useState<string[]>([]);
 
     const handleSelectChange = (e) => setChoice(parseInt(e.target.value));
 
-    const choiceToStyleMap = ["StyledNodeNormal", "StyledNodeResultGood", "StyledNodeResultMedium", "StyledNodeResultBad"]
-    const choiceToMoodMap = ["moodNormal", "moodGood", "moodMedium", "moodBad"]
+    const choiceToStyleMap = ["StyledNodeChoice", "StyledNodeResultGood", "StyledNodeResultMedium", "StyledNodeResultBad"]
+    const choiceToMoodMap = ["moodChoice", "moodGood", "moodMedium", "moodBad"]
 
     const addNode = () => {
         const nodeToAdd = {
             value: nodeText,
             children: [],
             nodeStyle: choiceToStyleMap[choice - 1],
-            moodStyle: choiceToMoodMap[choice - 1]
+            moodStyle: choiceToMoodMap[choice - 1],
+            moods: []
         };
 
         console.log(nodeToAdd);
@@ -85,7 +86,8 @@ const Node = ({node, showTree, pages, setPages, pagePtr}) => {
         //^ right click on emoji mood bar
         event.preventDefault(); // Prevent the default context menu from appearing
         //^ Put emoji mood bar logic here -> open chakra ui modal to enter emoji
-        setMoods([...moods, "🎃"]);
+        node.moods = [...node.moods, "🎃"];
+        setPages([...pages])
       }
 
 
@@ -104,7 +106,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr}) => {
                         onContextMenu={handleMoodMenu}
                         className={`somelement z-10 hover:cursor-pointer w-fit p-3 h-[5%] ${node.moodStyle} rounded-2xl border-2 flex items-center justify-center gap-3 text-lg`}
                     >
-                        {moods.map((mood) => (
+                        {node.moods.map((mood) => (
                         <p>{mood}</p>
                         ))}
                     </div>

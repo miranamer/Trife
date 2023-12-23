@@ -83,7 +83,7 @@
   background: #FFB3BA;
 }
 
-.StyledNodeDiet{
+.StyledNodeChoice{
   padding: 5px;
   border-radius: 8px;
   display: inline-block;
@@ -94,6 +94,11 @@
   position: relative;
   width: 180px;
   height: 70px;
+}
+
+.moodChoice{
+  border: 2px solid #75a9d4;
+  background: #C6DEF1;
 }
 
 .StyledNodeFinances{
