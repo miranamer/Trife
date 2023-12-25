@@ -10,49 +10,47 @@ type page = {
 }
 
 type node = {
-  value: string;
-  children: node[];
+  value: string
+  children: node[]
   nodeStyle?: string
   moodStyle?: string
-  isRoot: boolean,
-  moods: string[]
+  isRoot: boolean
+  moods: string[],
+  tags: []
 }
 
 function App() {
+
+  const startNode: node = {
+    value: "Start",
+    children: [],
+    nodeStyle: "StyledNodeNormal",
+    moodStyle: "moodNormal",
+    isRoot: true,
+    moods: [],
+    tags: []
+  }
   
   const testPage: page = {
     id: -1,
     date: "01/01/01",
-    node: {
-      value: "Start 1",
-      children: [],
-      nodeStyle: "StyledNodeNormal",
-      moodStyle: "moodNormal",
-      isRoot: true,
-      moods: []
-    }
+    node: structuredClone(startNode)
   }
 
   const testPage2: page = {
     id: 0,
     date: "02/01/01",
-    node: {
-      value: "Start 2",
-      children: [],
-      nodeStyle: "StyledNodeNormal",
-      moodStyle: "moodNormal",
-      isRoot: true,
-      moods: []
-    }
+    node: structuredClone(startNode)
   }
 
   const [pages, setPages] = useState<page[]>([testPage, testPage2]);
   const [pagePtr, setPagePtr] = useState<number>(0);
+  const [tags, setTags] = useState<string[][]>([['Book Proj', 'blue']])
 
   const showTree = (node: node) => {
     return (
       <>
-        <Node node={node} showTree={showTree} pages={pages} setPages={setPages} pagePtr={pagePtr}/>
+        <Node node={node} showTree={showTree} pages={pages} setPages={setPages} pagePtr={pagePtr} tags={tags} setTags={setTags}/>
       </>
     );
   };
