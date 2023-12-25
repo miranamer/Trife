@@ -15,7 +15,7 @@ type node = {
   nodeStyle?: string
   moodStyle?: string
   isRoot: boolean
-  moods: string[],
+  mood: string,
   tags: []
 }
 
@@ -73,7 +73,7 @@ function App() {
       <ChakraProvider>
         <div className="p-10">
           <h1 className='text-center mb-10 text-3xl font-bold text-orange-400'>{pages[pagePtr].date}</h1>
-          <Tree label={""}>{showTree(pages[pagePtr].node)}</Tree>
+          <Tree label={""} lineWidth='3px' lineColor='#b794ec' lineBorderRadius='10px'>{showTree(pages[pagePtr].node)}</Tree>
           {pagePtr < pages.length - 1 ? <p onClick={() => incrementPagePointer()} className='fixed bottom-10 right-10 bg-blue-500 p-2 rounded-md text-blue-200 hover:cursor-pointer'>Next</p> : null}
           {pagePtr > 0 ? <p onClick={() => decrementPagePointer()} className='fixed bottom-10 left-10 bg-red-500 p-2 rounded-md text-red-200 hover:cursor-pointer'>Back</p> : null}
           <p onClick={() => debugMenu()} className='text-purple-400 text-xl font-bold fixed bottom-5 text-center left-[50%]'>Debug</p>

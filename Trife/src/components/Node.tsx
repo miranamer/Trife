@@ -24,7 +24,7 @@ import {
     TagCloseButton
   } from '@chakra-ui/react'
 
-//! Make a modal for the mood menu
+//! Make a secret node type
 //! Add editing to nodes
 //! Make a new page with a default start tree when the next day arrives
 //! Change Line Style
@@ -35,11 +35,12 @@ import {
 //! FUTURE -> store trees in firebase or some storage
 //! Add themes (e.g: Pastel, Dark Mode, Dracula, Galaxy, Studio Ghibli)
 //! Add full tree view which shows all trees in column form (chronological order)
-//! Show how many trees someone has made
+//! TreeCounter = Show how many trees someone has made
 
 const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
 
     const { isOpen, onOpen, onClose } = useDisclosure()
+    const { isOpen: isOpenMood, onOpen: onOpenMood, onClose: onCloseMood } = useDisclosure()
     
     const [choice, setChoice] = useState<number>(0)
     const [nodeText, setNodeText] = useState<string>("");
@@ -47,6 +48,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
     const [tagColor, setTagColor] = useState<string>("");
     const [tagText, setTagText] = useState<string>("");
     const [selectedTags, setSelectedTags] = useState<string[][]>([]);
+    const [mood, setMood] = useState<string>(node.mood);
 
     const handleSelectChange = (e) => setChoice(parseInt(e.target.value));
 
@@ -59,7 +61,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
             children: [],
             nodeStyle: choiceToStyleMap[choice - 1],
             moodStyle: choiceToMoodMap[choice - 1],
-            moods: [],
+            mood: "",
             tags: selectedTags
         };
 
@@ -96,9 +98,11 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
     function handleMoodMenu(event) {
         //^ right click on emoji mood bar
         event.preventDefault(); // Prevent the default context menu from appearing
+        setMood(node.mood);
+        onOpenMood();
         //^ Put emoji mood bar logic here -> open chakra ui modal to enter emoji
-        node.moods = [...node.moods, "🎃"];
-        setPages([...pages])
+        //node.moods = [...node.moods, "🎃"];
+        //setPages([...pages])
     }
 
     const addNewTag = () => {
@@ -121,6 +125,16 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
         setTagMaker(false);
         setSelectedTags([]);
         onClose()
+    }
+
+    const handleMoodChange = () => {
+        node.mood = mood
+        
+        if(mood === "🪄🪄🪄"){
+            alert("You're a wizard Harry");
+        }
+        
+        setPages([ ...pages ]);
     }
 
 
@@ -147,11 +161,9 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
                 </div>
                     <div
                         onContextMenu={handleMoodMenu}
-                        className={`somelement z-10 hover:cursor-pointer w-fit p-3 h-[5%] ${node.moodStyle} rounded-2xl border-2 flex items-center justify-center gap-3 text-lg`}
+                        className={`somelement z-10 hover:cursor-pointer w-max p-3 h-[5%] ${node.moodStyle} rounded-2xl border-2 flex items-center justify-center gap-3 text-lg`}
                     >
-                        {node.moods.map((mood) => (
-                        <p>{mood}</p>
-                        ))}
+                        <p>{node.mood}</p>
                     </div>
                 </div>
             : null}
@@ -198,6 +210,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
                             <div onClick={() => tagColor !== "red" ? setTagColor("red") : setTagColor("")} className={`w-[30px] h-[30px] bg-red-500 hover:cursor-pointer ${tagColor === "red" ? "border-2 border-black" : null}`}></div>
                             <div onClick={() => tagColor !== "green" ? setTagColor("green") : setTagColor("")} className={`w-[30px] h-[30px] bg-green-500 hover:cursor-pointer ${tagColor === "green" ? "border-2 border-black" : null}`}></div>
                             <div onClick={() => tagColor !== "yellow" ? setTagColor("yellow") : setTagColor("")} className={`w-[30px] h-[30px] bg-yellow-500 hover:cursor-pointer ${tagColor === "yellow" ? "border-2 border-black" : null}`}></div>
+                            {tagText == "<secret>" ? <div onClick={() => tagColor !== "purple" ? setTagColor("purple") : setTagColor("")} className={`w-[30px] h-[30px] bg-purple-500 hover:cursor-pointer ${tagColor === "purple" ? "border-2 border-black" : null}`}></div> : null}
                         </div>
                         </div>
                         <div className="flex gap-10 items-center justify-center">
@@ -220,6 +233,27 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
             </ModalFooter>
             </ModalContent>
             </Modal>
+
+
+
+            <Modal isOpen={isOpenMood} onClose={onCloseMood}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Edit Mood</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <div className="flex flex-col gap-5">
+                            <Input value={mood} onChange={(e) => setMood(e.target.value)} placeholder='Enter Mood Emojis' />
+                            <Button onClick={() => handleMoodChange()}>Done</Button>
+                        </div>
+                    </ModalBody>
+                    <ModalFooter>
+                        {/* Add the footer for your mood modal here */}
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+
+
         </>
       );
 };
