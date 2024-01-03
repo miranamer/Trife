@@ -113,3 +113,11 @@
   width: 180px;
   height: 70px;
 }
+
+.caretClass{
+  caret-shape: block;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
