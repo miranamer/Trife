@@ -14,11 +14,13 @@ import {
     Select,
     Input,
     AlertDialog,
+    Alert,
     AlertDialogHeader,
     AlertDialogBody,
     AlertDialogOverlay,
     AlertDialogContent,
     AlertDialogFooter,
+    AlertIcon,
     Tag,
     TagLabel,
     TagCloseButton
@@ -27,7 +29,6 @@ import {
 //! Make a secret node type
 //! Add editing to nodes
 //! Make a new page with a default start tree when the next day arrives
-//! Change Line Style
 //! Left Click -> Details page w/ addition text, images and all tags like real journal
 //! Right Click -> Manage Node Page (Add, Edit, Delete)
 //! Option to delete or edit tags from global array
@@ -56,6 +57,11 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
     const choiceToMoodMap = ["moodChoice", "moodGood", "moodMedium", "moodBad"]
 
     const addNode = () => {
+        if(choice < 1){
+            alert('Select a valid option');
+            return;
+        }
+
         const nodeToAdd = {
             value: nodeText,
             children: [],
