@@ -1,6 +1,6 @@
-import {React, useState, useRef} from 'react'
+import {React, useState, useRef, useEffect} from 'react'
 import { TreeNode } from "react-organizational-chart";
-import { FaCheckCircle } from "react-icons/fa";
+import { FaCheckCircle, FaPencilAlt } from "react-icons/fa";
 import {
     Modal,
     ModalOverlay,
@@ -23,8 +23,13 @@ import {
     AlertIcon,
     Tag,
     TagLabel,
-    TagCloseButton
+    TagCloseButton,
+    Textarea
   } from '@chakra-ui/react'
+
+  import ImageGallery from "react-image-gallery";
+  import "react-image-gallery/styles/css/image-gallery.css";
+  import { FileUploader } from "react-drag-drop-files";
 
 //! Make a secret node type
 //! Add editing to nodes
@@ -40,8 +45,9 @@ import {
 
 const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
 
-    const { isOpen, onOpen, onClose } = useDisclosure()
-    const { isOpen: isOpenMood, onOpen: onOpenMood, onClose: onCloseMood } = useDisclosure()
+    const { isOpen, onOpen, onClose } = useDisclosure() // Manage Node
+    const { isOpen: isOpenMood, onOpen: onOpenMood, onClose: onCloseMood } = useDisclosure() // Mood
+    const { isOpen: isOpenManage, onOpen: onOpenManage, onClose: onCloseManage } = useDisclosure() // Details Page
     
     const [choice, setChoice] = useState<number>(0)
     const [nodeText, setNodeText] = useState<string>("");
@@ -50,6 +56,27 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
     const [tagText, setTagText] = useState<string>("");
     const [selectedTags, setSelectedTags] = useState<string[][]>([]);
     const [mood, setMood] = useState<string>(node.mood);
+    const [openFileUploader, setOpenFileUploader] = useState<boolean>(false);
+    const [detailsText, setDetailsText] = useState<string>(node.details);
+    const [detailsTextForm, setDetailsTextForm] = useState<boolean>(node.details === "" ? false : true);
+    
+
+    const fileTypes = ["JPG", "PNG", "GIF"];
+    
+    const [file, setFile] = useState(null);
+    
+    const handleFileUpload = (file) => {
+        setFile(file);
+        console.log(file);
+
+        const mediaItem = {
+            original: URL.createObjectURL(file),
+            thumbnail: URL.createObjectURL(file),
+        };
+
+        node.media.push(mediaItem);
+        setPages([...pages]);
+    };
 
     const handleSelectChange = (e) => setChoice(parseInt(e.target.value));
 
@@ -68,7 +95,14 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
             nodeStyle: choiceToStyleMap[choice - 1],
             moodStyle: choiceToMoodMap[choice - 1],
             mood: "",
-            tags: selectedTags
+            tags: selectedTags,
+            details: "",
+            media: [
+                {
+                    original: "https://picsum.photos/id/1018/1000/600/",
+                    thumbnail: "https://picsum.photos/id/1018/250/150/",
+                  }
+            ],
         };
 
         console.log(nodeToAdd);
@@ -104,11 +138,18 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
     function handleMoodMenu(event) {
         //^ right click on emoji mood bar
         event.preventDefault(); // Prevent the default context menu from appearing
+        event.stopPropagation();
         setMood(node.mood);
         onOpenMood();
         //^ Put emoji mood bar logic here -> open chakra ui modal to enter emoji
         //node.moods = [...node.moods, "🎃"];
         //setPages([...pages])
+    }
+
+    function handleManageNodeMenu(event) {
+        //^ right click on Node to get manage node menu
+        event.preventDefault(); // Prevent the default context menu from appearing
+        onOpen();
     }
 
     const addNewTag = () => {
@@ -143,6 +184,29 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
         setPages([ ...pages ]);
     }
 
+    const handleDetailTextChange = () => {
+        node.details = detailsText;
+        setDetailsTextForm(true);
+        setPages([ ...pages ]);
+    }
+
+    const openDetailTextBox = () => {
+        setDetailsText(node.details);
+        setDetailsTextForm(false);
+    }
+
+    const openDetailsPage = () => {
+        onOpenManage();
+        node.details === "" ? setDetailsTextForm(false) : setDetailsTextForm(true);
+    }
+    
+    const closeDetailsPage = () => {
+        onCloseManage();
+        setDetailsText("");
+        setOpenFileUploader(false);
+        setFile(null);
+    }
+
 
     return (
         <>
@@ -150,7 +214,8 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
             label={node.value !== "" ?
                 <div
                 className={`mt-[10px] ${node.nodeStyle} hover:cursor-pointer`}
-                onClick={onOpen}
+                onContextMenu={handleManageNodeMenu}
+                onClick={openDetailsPage}
                 >
                 <div className="flex flex-col items-center justify-center w-full h-full">
                     {node.tags.length > 0 ? 
@@ -259,7 +324,27 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
                 </ModalContent>
             </Modal>
 
-
+            <Modal isOpen={isOpenManage} onClose={closeDetailsPage}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Edit Details</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <div className="flex flex-col gap-5">
+                            {detailsTextForm === false ? <Textarea value={detailsText} onChange={(e) => setDetailsText(e.target.value)} placeholder='Enter Event Details' /> : <div className='mb-10 flex flex-wrap relative'><h1 className='font-semibold text-gray-700'>{node.details}</h1><p onClick={() => openDetailTextBox()} className='absolute top-0 right-0 text-blue-400 text-2xl hover:cursor-pointer hover:text-blue-700'><FaPencilAlt /></p></div>}
+                            {detailsTextForm === false ? <Button onClick={() => handleDetailTextChange()} colorScheme='green' variant="outline">Update Details</Button> : null}
+                            <div className="flex items-center justify-center">
+                                <ImageGallery items={node.media} />;
+                            </div>
+                            {openFileUploader ? <FileUploader handleChange={handleFileUpload} name="file" types={fileTypes} /> : null}
+                            <Button onClick={() => setOpenFileUploader(!openFileUploader)} colorScheme='yellow'>Add Media</Button>
+                        </div>
+                    </ModalBody>
+                    <ModalFooter>
+                        {/* Add the footer for your mood modal here */}
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </>
       );
 };

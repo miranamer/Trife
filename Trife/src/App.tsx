@@ -8,7 +8,8 @@ import MainPage from './components/MainPage';
 type page = {
   id: number,
   date: string,
-  node: node
+  node: node,
+  title?: string //! Add this to MainPage functionality of adding new days
 }
 
 type node = {
@@ -18,7 +19,10 @@ type node = {
   moodStyle?: string
   isRoot: boolean
   mood: string,
-  tags: []
+  tags: [],
+  details: string,
+  media: object[],
+  location?: string
 }
 
 function App() {
@@ -29,8 +33,15 @@ function App() {
     nodeStyle: "StyledNodeNormal",
     moodStyle: "moodNormal",
     isRoot: true,
-    moods: [],
-    tags: []
+    mood: "",
+    tags: [],
+    details: "",
+    media: [
+      {
+      original: "https://picsum.photos/id/1018/1000/600/",
+      thumbnail: "https://picsum.photos/id/1018/250/150/",
+    }
+  ],
   }
   
   const testPage: page = {

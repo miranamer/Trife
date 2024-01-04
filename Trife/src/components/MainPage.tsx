@@ -8,7 +8,8 @@ import { FaPlus } from "react-icons/fa";
 type page = {
     id: number,
     date: string,
-    node: node
+    node: node,
+    title?: string
   }
   
 type node = {
@@ -18,7 +19,10 @@ type node = {
     moodStyle?: string
     isRoot: boolean
     mood: string,
-    tags: []
+    tags: [],
+    details: string,
+    media: string[],
+    location?: string
 }
 
 //! Reverse order of pages in order to show latest day on top
@@ -40,6 +44,7 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
     const [menuOpen, setMenuOpen] = useState<boolean>(false);
     const [searchText, setSearchText] = useState<string>("");
     const [filteredArray, setFilteredArray] = useState([]); // if searchText != "" and or filters filters present
+    const [showFilteredArray, setShowFilteredArray] = useState<boolean>(false);
 
     const startNode: node = {
         value: "Start",
@@ -48,7 +53,14 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
         moodStyle: "moodNormal",
         isRoot: true,
         moods: [],
-        tags: []
+        tags: [],
+        details: "",
+        media: [
+            {
+                original: "https://picsum.photos/id/1018/1000/600/",
+                thumbnail: "https://picsum.photos/id/1018/250/150/",
+              }
+        ]
     }
 
     const TestDate = "03/01/01" // replace w/ curr date
@@ -64,7 +76,8 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
         const newDay: page = {
             id: pages.length,
             date: TestDate,
-            node: structuredClone(startNode)
+            node: structuredClone(startNode),
+            title: ""
         }
 
         setPages([...pages, newDay]);
@@ -74,6 +87,7 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
         setFilteredArray([]);
         setSearchText("");
         setMenuOpen(false);
+        setShowFilteredArray(false);
     }
 
     const addSelectedTag = (selectedTag) => {
@@ -124,16 +138,21 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
             }
             console.log(filteredDays);
             setFilteredArray(filteredDays);
+            setShowFilteredArray(true);
         }
         else if(searchText != "" && selectedFilters.length > 0){ // search with filters
             return;
+            setShowFilteredArray(true);
         }
         else if (searchText === "" && selectFilter.length > 0){ // no search + filters
             return;
+            setShowFilteredArray(true);
         }
-        else{
-            setFilteredArray([]); // clear it as theres no search + no filters
+        else{ //^ doesn't work
+            resetFilters();
         }
+
+        console.log('Search Text: ', searchText);
 
         // check if any filters have been applied
         // go through all days and in each tree, check that at least 1 instance of every filter is present
@@ -193,7 +212,7 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
                             <h1 class="text-3xl"><FaPlus /></h1>
                         </div>
                         
-                        {filteredArray.length == 0 ? pages.map((page) => (
+                        {showFilteredArray === false ? pages.map((page) => (
                             <div key={page.id} onClick={() => setSelectedDayBar(page.id)}><DayBar page={page} highlighted={page.id === selectedDayBar} /></div>
                         )) : filteredArray.map((page) => (
                             <div key={page.id} onClick={() => setSelectedDayBar(page.id)}><DayBar page={page} highlighted={page.id === selectedDayBar} /></div>
