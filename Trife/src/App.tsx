@@ -10,6 +10,7 @@ type page = {
   date: string,
   node: node,
   title?: string //! Add this to MainPage functionality of adding new days
+  details?: string
 }
 
 type node = {
@@ -47,13 +48,17 @@ function App() {
   const testPage: page = {
     id: 0,
     date: "01/01/01",
-    node: structuredClone(startNode)
+    node: structuredClone(startNode),
+    title: "Jane Street",
+    details: "Went great, had a lot of fun!"
   }
 
   const testPage2: page = {
     id: 1,
     date: "02/01/01",
-    node: structuredClone(startNode)
+    node: structuredClone(startNode),
+    title: "Amazon Internship Day 1",
+    details: "Really fun, learnt a lot"
   }
 
   const [pages, setPages] = useState<page[]>([testPage, testPage2]);

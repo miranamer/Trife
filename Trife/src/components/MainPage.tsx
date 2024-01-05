@@ -1,15 +1,27 @@
 import React, { useState } from 'react'
 import { Tree } from 'react-organizational-chart';
 import DayBar from './DayBar'
-import { Tag, TagLabel, TagCloseButton } from '@chakra-ui/react';
+import { Tag, TagLabel, TagCloseButton, Textarea } from '@chakra-ui/react';
 import { IoIosArrowDropdown, IoIosArrowDropup  } from "react-icons/io";
 import { FaPlus } from "react-icons/fa";
+import {
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalFooter,
+    ModalBody,
+    ModalCloseButton,
+    useDisclosure,
+    Button,
+    Input} from "@chakra-ui/react";
 
 type page = {
     id: number,
     date: string,
     node: node,
-    title?: string
+    title?: string,
+    details?: string
   }
   
 type node = {
@@ -45,6 +57,9 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
     const [searchText, setSearchText] = useState<string>("");
     const [filteredArray, setFilteredArray] = useState([]); // if searchText != "" and or filters filters present
     const [showFilteredArray, setShowFilteredArray] = useState<boolean>(false);
+    const [pageTitle, setPageTitle] = useState<string>("");
+    const [pageDetails, setPageDetails] = useState<string>("");
+    const {isOpen, onOpen, onClose} = useDisclosure();
 
     const startNode: node = {
         value: "Start",
@@ -52,7 +67,7 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
         nodeStyle: "StyledNodeNormal",
         moodStyle: "moodNormal",
         isRoot: true,
-        moods: [],
+        mood: "",
         tags: [],
         details: "",
         media: [
@@ -77,10 +92,14 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
             id: pages.length,
             date: TestDate,
             node: structuredClone(startNode),
-            title: ""
+            title: pageTitle,
+            details: pageDetails
         }
 
+        setPageDetails("")
+        setPageTitle("")
         setPages([...pages, newDay]);
+        onClose();
     }
 
     const resetFilters = () => {
@@ -88,6 +107,7 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
         setSearchText("");
         setMenuOpen(false);
         setShowFilteredArray(false);
+        setSelectedFilters([]);
     }
 
     const addSelectedTag = (selectedTag) => {
@@ -105,14 +125,31 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
     }
 
     const traverseTree_SearchText = (searchText, node) => {
-        let lowercaseValue = node.value.toLowerCase();
-        if (lowercaseValue.includes(searchText)) {
+        const lowercaseValue = node.value.toLowerCase();
+        const lowercaseNodeDetails = node.details.toLowerCase();
+        if (lowercaseValue.includes(searchText) || lowercaseNodeDetails.includes(searchText)) {
             console.log('FOUND!', node);
             return true;
         }
     
         if (Array.isArray(node.children)) {
             return node.children.some((child) => traverseTree_SearchText(searchText, child));
+        }
+    
+        return false;
+    };
+
+    const traverseTree_Filters = (filters, node) => {
+        console.log(node, node.mood)
+        for(let i = 0; i < filters.length; i++){
+            const currFilter = filters[i]
+            if(node.tags.includes(currFilter) || node.mood.includes(currFilter)){
+                return true;
+            } 
+        }
+    
+        if (Array.isArray(node.children)) {
+            return node.children.some((child) => traverseTree_Filters(filters, child));
         }
     
         return false;
@@ -140,14 +177,37 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
             setFilteredArray(filteredDays);
             setShowFilteredArray(true);
         }
+        
         else if(searchText != "" && selectedFilters.length > 0){ // search with filters
-            return;
+            for(let i = 0; i < pages.length; i++){
+                // check for searchText in Title (when I add it)
+                // check for searchText in nodes
+                const currTree = pages[i].node;
+                if(traverseTree_Filters(selectedFilters, currTree) === true && traverseTree_SearchText(searchText, currTree) === true){
+                    filteredDays.push(pages[i]);
+                }
+                console.log('a', traverseTree_Filters(selectedFilters, currTree), selectedFilters)
+                console.log('b', traverseTree_SearchText(searchText, currTree))
+            }
+            
+            setFilteredArray(filteredDays);
             setShowFilteredArray(true);
         }
+        
         else if (searchText === "" && selectFilter.length > 0){ // no search + filters
-            return;
+            for(let i = 0; i < pages.length; i++){
+                // check for searchText in Title (when I add it)
+                // check for searchText in nodes
+                const currTree = pages[i].node;
+                if(traverseTree_Filters(selectedFilters, currTree)){
+                    filteredDays.push(pages[i]);
+                }
+            }
+
+            setFilteredArray(filteredDays);
             setShowFilteredArray(true);
         }
+        
         else{ //^ doesn't work
             resetFilters();
         }
@@ -208,7 +268,7 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
                     
                     <div class="overflow-scroll no-scrollbar bg-[#FAF6EC] h-full border-[#746C59] border-[2px] flex flex-col gap-3 p-3 text-[#746C59]">
 
-                        <div onClick={() => addNewDay()} class="hover:cursor-pointer rounded-full ml-6 w-[60px] border-2 border-[#746C59] h-[60px] bg-[#EEE1BF] flex items-center justify-center">
+                        <div onClick={onOpen} class="hover:cursor-pointer rounded-full ml-6 w-[60px] border-2 border-[#746C59] h-[60px] bg-[#EEE1BF] flex items-center justify-center">
                             <h1 class="text-3xl"><FaPlus /></h1>
                         </div>
                         
@@ -229,6 +289,24 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
                 </div>
             </div>
             </div>
+
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Add Day Info</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <div className="flex flex-col gap-5">
+                            <Input onChange={(e) => setPageTitle(e.target.value)} placeholder='Enter Title' />
+                            <Textarea onChange={(e) => setPageDetails(e.target.value)} placeholder='Enter Overview'/>
+                            <Button onClick={() => addNewDay()} colorScheme='green' variant='outline'>Confirm</Button>
+                        </div>
+                    </ModalBody>
+                    <ModalFooter>
+                        {/* Add the footer for your mood modal here */}
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
     </>
   )
 }

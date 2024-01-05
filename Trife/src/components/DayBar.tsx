@@ -14,11 +14,8 @@ const DayBar = ({page, highlighted}) => {
                 <h1>{dateToMonthMap[page.date.substring(3, 5)]}</h1>
             </div>
             <div className="w-full h-full px-2 py-1">
-                <h1 className="text-xl font-semibold">First day at Jane Street</h1>
-                    <ul>
-                        <li>- Stand up</li>
-                        <li>- Code Review</li>
-                    </ul>
+                <h1 className="text-xl font-semibold">{page.title}</h1>
+                    <p className='mt-2'>{page.details}</p>
             </div>
         </div>
     </>
