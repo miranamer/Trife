@@ -14,7 +14,12 @@ import {
     ModalCloseButton,
     useDisclosure,
     Button,
-    Input} from "@chakra-ui/react";
+    Input,
+    Tooltip} from "@chakra-ui/react";
+
+import { ImTree, ImEnlarge2 } from "react-icons/im";
+import { IoIosPaper } from "react-icons/io";
+import FilterBox from './FilterBox';
 
 type page = {
     id: number,
@@ -48,7 +53,7 @@ type node = {
 //? - Show All The Selected Tags for the Node
 
 
-const MainPage = ({pages, showTree, setPages, tags}) => {
+const MainPage = ({pages, showTree, setPages, tags, moods}) => {
 
     const [selectedDayBar, setSelectedDayBar] = useState<number>(0);
     const [selectedFilter, setSelectedFilter] = useState<string>(""); // "tag", "mood", etc -> determines what filter menu to open
@@ -119,6 +124,15 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
         }
     }
 
+    const addSelectedMood = (selectedMood) => {
+        if(selectedFilters.includes(selectedMood) == false){
+            setSelectedFilters([...selectedFilters, selectedMood])
+        }
+        else{
+            setSelectedFilters(selectedFilters.filter(curr => curr != selectedMood));
+        }
+    }
+
     const selectFilter = (filter) => { //? Show all selected tags and moods somewhere - new div left of dropdown showing all selected filtered items 
         setMenuOpen(false);
         setSelectedFilter(filter);
@@ -155,7 +169,7 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
         return false;
     };
 
-    const searchForDays = (e) => {
+    const searchForDays = (e) => { //! Add checking searchText in page.title and page.details
         // if no, check if search string is non empty
         // if yes, search for all days where any node contains the search string
 
@@ -163,12 +177,17 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
 
         const filteredDays = [];
 
-        if(searchText != "" && selectedFilters.length == 0){ // search + no filters
+        if(searchText === "" && selectedFilters.length == 0){
+            console.log("CASE 4")
+            resetFilters();
+        }
+
+        else if(searchText != "" && selectedFilters.length == 0){ // search + no filters
             for(let i = 0; i < pages.length; i++){
                 // check for searchText in Title (when I add it)
                 // check for searchText in nodes
                 const currTree = pages[i].node;
-                if(traverseTree_SearchText(searchText.toLowerCase(), currTree) === true){
+                if((traverseTree_SearchText(searchText.toLowerCase(), currTree) || pages[i].title.toLowerCase().includes(searchText.toLowerCase()) || pages[i].details.toLowerCase().includes(searchText.toLowerCase()))){
                     filteredDays.push(pages[i]);
                 }
                 console.log('->', traverseTree_SearchText(searchText, currTree));
@@ -183,7 +202,7 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
                 // check for searchText in Title (when I add it)
                 // check for searchText in nodes
                 const currTree = pages[i].node;
-                if(traverseTree_Filters(selectedFilters, currTree) === true && traverseTree_SearchText(searchText, currTree) === true){
+                if(traverseTree_Filters(selectedFilters, currTree) === true && (traverseTree_SearchText(searchText.toLowerCase(), currTree) || pages[i].title.toLowerCase().includes(searchText.toLowerCase()) || pages[i].details.toLowerCase().includes(searchText.toLowerCase()))){
                     filteredDays.push(pages[i]);
                 }
                 console.log('a', traverseTree_Filters(selectedFilters, currTree), selectedFilters)
@@ -207,17 +226,6 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
             setFilteredArray(filteredDays);
             setShowFilteredArray(true);
         }
-        
-        else{ //^ doesn't work
-            resetFilters();
-        }
-
-        console.log('Search Text: ', searchText);
-
-        // check if any filters have been applied
-        // go through all days and in each tree, check that at least 1 instance of every filter is present
-        // this is done by iterating through all nodes and checking off found filters
-        // e.g if tag filter is applied: Book Proj + Search string = "Dune" => Show all days where both Dune and Book Proj tag are present
     }
 
 
@@ -245,26 +253,9 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
                         </div>
                     </div> : null}
                     
-                    {selectedFilter === "tag" ? <div class="bg-[#FAF6EC] w-[100%] h-[150px] border-[#746C59] border-[2px] flex p-3">
-                        <div class="flex flex-col gap-5">
-                            <h1 class="text-[#746C59] text-2xl">Filter: Filter By Tag</h1>
-                            <div class="flex gap-3 items-center">
-                                {tags.map((tag) => (
-                                    <Tag
-                                    size='lg'
-                                    borderRadius='full'
-                                    variant='solid'
-                                    colorScheme={tag[1]}
-                                    className='hover:cursor-pointer'
-                                    onClick={() => addSelectedTag(tag)}
-                                    >
-                                    <TagLabel>{tag[0]}</TagLabel>
-                                    {selectedFilters.includes(tag) ? <TagCloseButton /> : null}
-                                </Tag>
-                                ))}
-                            </div>
-                        </div>
-                    </div> : null}
+                    {selectedFilter === "tag" || selectedFilter === "mood" ? 
+                        <FilterBox addSelectedMood={addSelectedMood} addSelectedTag={addSelectedTag} selectedFilters={selectedFilters} isTagFilter={selectedFilter === "tag" ? true : false} isMoodFilter={selectedFilter === "mood" ? true : false} tags={tags} moods={moods} />
+                    : null}
                     
                     <div class="overflow-scroll no-scrollbar bg-[#FAF6EC] h-full border-[#746C59] border-[2px] flex flex-col gap-3 p-3 text-[#746C59]">
 
@@ -281,7 +272,22 @@ const MainPage = ({pages, showTree, setPages, tags}) => {
                     </div>
                 </div>
                 
-                <div class="flex flex-col w-[50%] h-[95vh] bg-[#FAF6EC] border-[#746C59] border-[2px] p-2">
+                <div class="relative flex flex-col w-[50%] h-[95vh] bg-[#FAF6EC] border-[#746C59] border-[2px] p-2">
+                    <div className="absolute top-[10px] left-[10px] flex gap-2">
+                        <Tooltip label='Tree View' bg='#746C59' textColor='#EEE1BF'>
+                            <p className='hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]'><ImTree /></p>
+                        </Tooltip>
+                        
+                        <Tooltip label='Text View' bg='#746C59' textColor='#EEE1BF'>
+                            <p className='hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]'><IoIosPaper /></p>
+                        </Tooltip>
+                    </div>
+
+                    <div className="absolute top-[10px] right-[10px] flex gap-2">
+                        <Tooltip label='Enlarge' bg='#746C59' textColor='#EEE1BF'>
+                            <p className='hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]'><ImEnlarge2 /></p>
+                        </Tooltip>
+                    </div>
                     <div class="w-full h-[40px] flex items-center justify-center">
                         <h1 class="font-semibold text-[#746C59] underline text-xl">{pages[selectedDayBar].date}</h1>
                     </div>

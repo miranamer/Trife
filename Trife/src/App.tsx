@@ -64,11 +64,12 @@ function App() {
   const [pages, setPages] = useState<page[]>([testPage, testPage2]);
   const [pagePtr, setPagePtr] = useState<number>(0);
   const [tags, setTags] = useState<string[][]>([['Book Proj', 'blue']])
+  const [moods, setMoods] = useState<string[]>([]);
 
   const showTree = (node: node) => {
     return (
       <>
-        <Node node={node} showTree={showTree} pages={pages} setPages={setPages} pagePtr={pagePtr} tags={tags} setTags={setTags}/>
+        <Node node={node} showTree={showTree} pages={pages} setPages={setPages} pagePtr={pagePtr} tags={tags} setTags={setTags} moods={moods} setMoods={setMoods} />
       </>
     );
   };
@@ -96,7 +97,7 @@ function App() {
       <BrowserRouter>
         <ChakraProvider>
           <Routes>
-            <Route path='/' element={<MainPage pages={pages} setPages={setPages} showTree={showTree} tags={tags} />} />
+            <Route path='/' element={<MainPage pages={pages} setPages={setPages} showTree={showTree} tags={tags} moods={moods} />} />
           </Routes>
         </ChakraProvider>
       </BrowserRouter>

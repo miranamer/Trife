@@ -30,6 +30,7 @@ import {
   import ImageGallery from "react-image-gallery";
   import "react-image-gallery/styles/css/image-gallery.css";
   import { FileUploader } from "react-drag-drop-files";
+  import emojiRegex from 'emoji-regex';
 
 //! Make a secret node type
 //! Add editing to nodes
@@ -43,7 +44,7 @@ import {
 //! Add full tree view which shows all trees in column form (chronological order)
 //! TreeCounter = Show how many trees someone has made
 
-const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
+const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, setMoods}) => {
 
     const { isOpen, onOpen, onClose } = useDisclosure() // Manage Node
     const { isOpen: isOpenMood, onOpen: onOpenMood, onClose: onCloseMood } = useDisclosure() // Mood
@@ -175,14 +176,22 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags}) => {
     }
 
     const handleMoodChange = () => {
-        node.mood = mood
-        
-        if(mood === "🪄🪄🪄"){
+        node.mood = mood;
+    
+        if (mood === "🪄🪄🪄") {
             alert("You're a wizard Harry");
         }
-        
-        setPages([ ...pages ]);
-    }
+    
+        // Use emoji-regex to extract emoji sequences
+        const emojiArray = Array.from(mood.match(emojiRegex()) || []);
+    
+        // Create a Set without including an empty string
+        const uniqueMoodsSet = new Set([...moods, ...emojiArray]);
+        const uniqueMoodsArray = Array.from(uniqueMoodsSet).filter(char => char !== "");
+    
+        setMoods(uniqueMoodsArray);
+        setPages([...pages]);
+    };
 
     const handleDetailTextChange = () => {
         node.details = detailsText;
