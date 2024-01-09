@@ -16,6 +16,7 @@
     "emoji-regex": "^10.3.0",
     "framer-motion": "^10.16.16",
     "react": "^18.2.0",
+    "react-calendar": "^4.8.0",
     "react-dom": "^18.2.0",
     "react-drag-drop-files": "^2.3.10",
     "react-icons": "^4.12.0",

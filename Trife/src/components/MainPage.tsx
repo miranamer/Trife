@@ -3,7 +3,7 @@ import { Tree } from 'react-organizational-chart';
 import DayBar from './DayBar'
 import { Tag, TagLabel, TagCloseButton, Textarea } from '@chakra-ui/react';
 import { IoIosArrowDropdown, IoIosArrowDropup  } from "react-icons/io";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaCalendarAlt } from "react-icons/fa";
 import {
     Modal,
     ModalOverlay,
@@ -20,6 +20,7 @@ import {
 import { ImTree, ImEnlarge2 } from "react-icons/im";
 import { IoIosPaper } from "react-icons/io";
 import FilterBox from './FilterBox';
+import Calendar from 'react-calendar';
 
 type page = {
     id: number,
@@ -41,6 +42,10 @@ type node = {
     media: string[],
     location?: string
 }
+
+type ValuePiece = Date | null;
+
+type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 //! Reverse order of pages in order to show latest day on top
 //! Left Click open info about node, right click -> manage node
@@ -64,6 +69,9 @@ const MainPage = ({pages, showTree, setPages, tags, moods}) => {
     const [showFilteredArray, setShowFilteredArray] = useState<boolean>(false);
     const [pageTitle, setPageTitle] = useState<string>("");
     const [pageDetails, setPageDetails] = useState<string>("");
+    const [calendarDate, setCalendarDate] = useState<Value>(new Date());
+    const [calendarOpen, setCalendarOpen] = useState<boolean>(false);
+    const [dateToAdd, setDateToAdd] = useState<string>(null);
     const {isOpen, onOpen, onClose} = useDisclosure();
 
     const startNode: node = {
@@ -83,19 +91,26 @@ const MainPage = ({pages, showTree, setPages, tags, moods}) => {
         ]
     }
 
-    const TestDate = "03/01/01" // replace w/ curr date
+    const TestDate = "03/01/2024" //! replace w/ curr date
 
-    const addNewDay = () => {
+    const addNewDay = (dateToAdd = null) => {
         for(let i = 0; i < pages.length; i++){
-            if(pages[i].date === TestDate){
-                alert('Already Have An Entry Today!');
-                return;
+            if(dateToAdd === null){
+                if(pages[i].date === TestDate){
+                    alert('Already Have An Entry Today!', pages[i].date, dateToAdd);
+                    return;
+                }
+            }
+            else{
+                if(pages[i].date == dateToAdd){
+                    alert('Already Have An Entry Today!', pages[i].date, dateToAdd);
+                }
             }
         }
 
         const newDay: page = {
             id: pages.length,
-            date: TestDate,
+            date: dateToAdd === null ? TestDate : dateToAdd, // curr date if no dateToAdd param
             node: structuredClone(startNode),
             title: pageTitle,
             details: pageDetails
@@ -104,6 +119,8 @@ const MainPage = ({pages, showTree, setPages, tags, moods}) => {
         setPageDetails("")
         setPageTitle("")
         setPages([...pages, newDay]);
+        setSelectedDayBar(pages.length); //^ set selected day bar (page) to newly added one
+        setDateToAdd(null);
         onClose();
     }
 
@@ -228,25 +245,50 @@ const MainPage = ({pages, showTree, setPages, tags, moods}) => {
         }
     }
 
+    const changeDate = (date) => {
+        const yyyy = date.getFullYear();
+        let mm = date.getMonth() + 1; // Months start at 0!
+        let dd = date.getDate();
+
+        if (dd < 10) dd = '0' + dd;
+        if (mm < 10) mm = '0' + mm;
+
+        const formattedToday = dd + '/' + mm + '/' + yyyy;
+
+        console.log('->', formattedToday);
+        console.log(calendarDate)
+
+        for(let i = 0; i < pages.length; i++){
+            if(pages[i].date == formattedToday){
+                console.log('Date Already Stored', pages[i].date);
+                setSelectedDayBar(i); // set current page to selected calendar date
+                return;
+            }
+        }
+
+        setDateToAdd(formattedToday);
+        onOpen();
+    }
+
 
 
   return (
     <>
-        <div class="bg-[#F1E8D7] w-full h-screen p-5">
+        <div class="bg-[#F1E8D7] w-full h-screen p-5 font-dmMono">
             <div class="flex gap-3 w-full">
                 <div class="flex flex-col gap-3 w-[50%] h-[95vh]">
                     
-                    <div class="relative bg-[#FAF6EC] w-full h-[100px] border-[#746C59] border-[2px] flex items-center p-3">
-                        <form onSubmit={(e) => searchForDays(e)}>
+                    <div class="relative bg-[#FAF6EC] w-full h-[100px] border-[#746C59] border-[2px] flex items-center p-3 rounded-md font-bold">
+                        <form className='w-full' onSubmit={(e) => searchForDays(e)}>
                             <input value={searchText} onChange={(e) => setSearchText(e.target.value)} className='caretClass w-full text-3xl text-[#746C59] bg-transparent focus:outline-none caret-[#746C59]' placeholder='Search For Text' />
                         </form>
-                        <div onClick={() => setMenuOpen(!menuOpen)} class="hover:cursor-pointer absolute right-0 flex items-center justify-center border-[#746C59] border-l-[2px] w-[100px] h-full bg-[#EFE2C0]">
+                        <div onClick={() => setMenuOpen(!menuOpen)} class="rounded-md hover:cursor-pointer absolute right-0 flex items-center justify-center border-[#746C59] border-l-[2px] w-[100px] h-full bg-[#EFE2C0]">
                             <p class="text-4xl text-[#746C59]">{menuOpen === false ? <IoIosArrowDropdown /> : <IoIosArrowDropup />}</p>
                         </div>
                     </div>
 
                     {menuOpen ? <div class='relative mb-[150px]'>
-                        <div class="bg-[#FAF6EC] flex flex-col w-[100px] absolute right-0 border-[#746C59] border-[2px] justify-end">
+                        <div class="rounded-md bg-[#FAF6EC] flex flex-col w-[100px] absolute right-0 border-[#746C59] border-[2px] justify-end">
                             <h1 onClick={() => selectFilter("tag")} class='hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] border-b-2 border-b-[#746C59] p-2 hover:cursor-pointer'>Tag</h1>
                             <h1 onClick={() => selectFilter("mood")} class='hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] border-b-2 border-b-[#746C59] p-2 hover:cursor-pointer'>Mood</h1>
                             <h1 onClick={() => resetFilters()} class='hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] p-2 hover:cursor-pointer'>Reset Filters</h1>
@@ -257,11 +299,24 @@ const MainPage = ({pages, showTree, setPages, tags, moods}) => {
                         <FilterBox addSelectedMood={addSelectedMood} addSelectedTag={addSelectedTag} selectedFilters={selectedFilters} isTagFilter={selectedFilter === "tag" ? true : false} isMoodFilter={selectedFilter === "mood" ? true : false} tags={tags} moods={moods} />
                     : null}
                     
-                    <div class="overflow-scroll no-scrollbar bg-[#FAF6EC] h-full border-[#746C59] border-[2px] flex flex-col gap-3 p-3 text-[#746C59]">
+                    <div class="relative rounded-md overflow-scroll no-scrollbar bg-[#FAF6EC] h-full border-[#746C59] border-[2px] flex flex-col gap-3 p-3 text-[#746C59]">
 
-                        <div onClick={onOpen} class="hover:cursor-pointer rounded-full ml-6 w-[60px] border-2 border-[#746C59] h-[60px] bg-[#EEE1BF] flex items-center justify-center">
-                            <h1 class="text-3xl"><FaPlus /></h1>
+                        <div className="flex items-center justify-between">
+                            <div onClick={onOpen} class="hover:cursor-pointer rounded-full ml-6 w-[60px] border-2 border-[#746C59] h-[60px] bg-[#EEE1BF] flex items-center justify-center">
+                                <Tooltip label='Add Day' bg='#746C59' textColor='#EEE1BF'>
+                                    <p class="text-3xl"><FaPlus /></p>
+                                </Tooltip>
+                            </div>
+                            <div onClick={() => setCalendarOpen(!calendarOpen)} class="hover:cursor-pointer rounded-full mr-6 w-[60px] border-2 border-[#746C59] h-[60px] bg-[#EEE1BF] flex items-center justify-center">
+                                <Tooltip label='Calendar' bg='#746C59' textColor='#EEE1BF'>
+                                    <p class="text-3xl"><FaCalendarAlt /></p>
+                                </Tooltip>
+                            </div>
                         </div>
+
+                        {calendarOpen ? <div className="flex w-[300px] absolute border-[#746C59] border-[2px] bg-white text-black p-2 rounded-md right-2 top-[10%]">
+                            <Calendar onClickDay={(value) => changeDate(value)} onChange={setCalendarDate} value={calendarDate} />
+                        </div> : null}
                         
                         {showFilteredArray === false ? pages.map((page) => (
                             <div key={page.id} onClick={() => setSelectedDayBar(page.id)}><DayBar page={page} highlighted={page.id === selectedDayBar} /></div>
@@ -272,7 +327,7 @@ const MainPage = ({pages, showTree, setPages, tags, moods}) => {
                     </div>
                 </div>
                 
-                <div class="relative flex flex-col w-[50%] h-[95vh] bg-[#FAF6EC] border-[#746C59] border-[2px] p-2">
+                <div class="relative flex flex-col w-[50%] h-[95vh] treeViewBG rounded-md border-[#746C59] border-[2px] p-2">
                     <div className="absolute top-[10px] left-[10px] flex gap-2">
                         <Tooltip label='Tree View' bg='#746C59' textColor='#EEE1BF'>
                             <p className='hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]'><ImTree /></p>
@@ -305,7 +360,7 @@ const MainPage = ({pages, showTree, setPages, tags, moods}) => {
                         <div className="flex flex-col gap-5">
                             <Input onChange={(e) => setPageTitle(e.target.value)} placeholder='Enter Title' />
                             <Textarea onChange={(e) => setPageDetails(e.target.value)} placeholder='Enter Overview'/>
-                            <Button onClick={() => addNewDay()} colorScheme='green' variant='outline'>Confirm</Button>
+                            <Button onClick={() => addNewDay(dateToAdd)} colorScheme='green' variant='outline'>Confirm</Button>
                         </div>
                     </ModalBody>
                     <ModalFooter>

@@ -11,7 +11,7 @@ import { IoClose } from "react-icons/io5";
 const FilterBox = ({isTagFilter, isMoodFilter, tags, moods, selectedFilters, addSelectedTag, addSelectedMood}) => {
   return (
     <>
-        <div class="bg-[#FAF6EC] w-[100%] h-[150px] border-[#746C59] border-[2px] flex p-3">
+        <div class="bg-[#FAF6EC] w-[100%] h-[150px] border-[#746C59] border-[2px] flex p-3 rounded-md">
             <div class="flex flex-col gap-5">
                 <h1 class="text-[#746C59] text-2xl">Filter By {isTagFilter ? "Tag" : "Mood"}</h1>
                 <div class="flex gap-3 items-center">

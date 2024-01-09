@@ -4,11 +4,11 @@ import React from 'react'
 //! Add Title parameter to pages to allow Titles for each day -> On click of + button to add new day, make modal for Title
 
 const DayBar = ({page, highlighted}) => {
-    const dateToMonthMap = {'01': 'Jan'};
+    const dateToMonthMap = {'01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr'}; // Do these
 
   return (
     <>
-        <div className={`${highlighted ? 'bg-[#EEE1BF]' : 'bg-[#FAF6EC]'} hover:cursor-pointer w-full h-[85px] border-[#746C59] border-[2px] flex`}>
+        <div className={`${highlighted ? 'bg-[#EEE1BF]' : 'bg-[#FAF6EC]'} rounded-md hover:cursor-pointer w-full h-[85px] border-[#746C59] border-[2px] flex`}>
             <div className="text-[#746C59] w-[120px]  h-full flex flex-col items-center justify-center text-2xl border-r-[2px] border-[#746C59]">
                 <h1>{page.date.substring(0, 2)}</h1>
                 <h1>{dateToMonthMap[page.date.substring(3, 5)]}</h1>

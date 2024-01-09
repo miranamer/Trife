@@ -47,7 +47,7 @@ function App() {
   
   const testPage: page = {
     id: 0,
-    date: "01/01/01",
+    date: "01/01/2024",
     node: structuredClone(startNode),
     title: "Jane Street",
     details: "Went great, had a lot of fun!"
@@ -55,7 +55,7 @@ function App() {
 
   const testPage2: page = {
     id: 1,
-    date: "02/01/01",
+    date: "02/01/2024",
     node: structuredClone(startNode),
     title: "Amazon Internship Day 1",
     details: "Really fun, learnt a lot"
