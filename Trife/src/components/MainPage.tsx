@@ -72,6 +72,7 @@ const MainPage = ({pages, showTree, setPages, tags, moods}) => {
     const [calendarDate, setCalendarDate] = useState<Value>(new Date());
     const [calendarOpen, setCalendarOpen] = useState<boolean>(false);
     const [dateToAdd, setDateToAdd] = useState<string>(null);
+    const [treeView, setTreeView] = useState<boolean>(true);
     const {isOpen, onOpen, onClose} = useDisclosure();
 
     const startNode: node = {

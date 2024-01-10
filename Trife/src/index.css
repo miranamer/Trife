@@ -22,6 +22,12 @@
   position: relative;
   width: 180px;
   height: 70px;
+  transition: 300ms;
+}
+
+.StyledNodeNormal:hover{
+  box-shadow: 0 0 30px 12px #DBCDF0;
+  transition: 300ms;
 }
 
 .moodNormal{
@@ -40,6 +46,12 @@
   position: relative;
   width: 180px;
   height: 70px;
+  transition: 300ms;
+}
+
+.StyledNodeResultMedium:hover{
+  box-shadow: 0 0 30px 12px #FAEDCB;
+  transition: 300ms;
 }
 
 .moodMedium{
@@ -58,6 +70,12 @@
   position: relative;
   width: 180px;
   height: 70px;
+  transition: 300ms;
+}
+
+.StyledNodeResultGood:hover{
+  box-shadow: 0 0 30px 12px #BAFFC9;
+  transition: 300ms;
 }
 
 .moodGood{
@@ -76,6 +94,12 @@
   position: relative;
   width: 180px;
   height: 70px;
+  transition: 300ms;
+}
+
+.StyledNodeResultBad:hover{
+  box-shadow: 0 0 30px 10px #FFB3BA;
+  transition: 300ms;
 }
 
 .moodBad{
@@ -94,6 +118,12 @@
   position: relative;
   width: 180px;
   height: 70px;
+  transition: 300ms;
+}
+
+.StyledNodeChoice:hover{
+  box-shadow: 0 0 30px 10px #C6DEF1;
+  transition: 300ms;
 }
 
 .moodChoice{

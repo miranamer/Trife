@@ -281,7 +281,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
                     </Tag>
                     ))}
                     </div>
-                    <Button onClick={() => setTagMaker(!tagMaker)}>Add New Tag</Button>
+                    <Button variant='outline' onClick={() => setTagMaker(!tagMaker)}>Add New Tag</Button>
                     {tagMaker === true ? <div className="flex flex-col gap-5">
                         <div className="flex">
                         <Input onChange={(e) => setTagText(e.target.value)} variant="filled" placeholder='Tag Text' />
@@ -336,11 +336,23 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
             <Modal isOpen={isOpenManage} onClose={closeDetailsPage}>
                 <ModalOverlay />
                 <ModalContent>
-                    <ModalHeader>Edit Details</ModalHeader>
+                    <ModalHeader>Add Details</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
                         <div className="flex flex-col gap-5">
                             {detailsTextForm === false ? <Textarea value={detailsText} onChange={(e) => setDetailsText(e.target.value)} placeholder='Enter Event Details' /> : <div className='mb-10 flex flex-wrap relative'><h1 className='font-semibold text-gray-700'>{node.details}</h1><p onClick={() => openDetailTextBox()} className='absolute top-0 right-0 text-blue-400 text-2xl hover:cursor-pointer hover:text-blue-700'><FaPencilAlt /></p></div>}
+                            <div className="flex w-full flex-wrap gap-2">
+                            {node.tags.map((tag) => (
+                                    <Tag
+                                    size='lg'
+                                    borderRadius='full'
+                                    variant='solid'
+                                    colorScheme={tag[1]}
+                                    >
+                                        <TagLabel>{tag[0]}</TagLabel>
+                                    </Tag>
+                            ))}
+                            </div>
                             {detailsTextForm === false ? <Button onClick={() => handleDetailTextChange()} colorScheme='green' variant="outline">Update Details</Button> : null}
                             <div className="flex items-center justify-center">
                                 <ImageGallery items={node.media} />;
