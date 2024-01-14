@@ -2,9 +2,14 @@ import React, { useState } from "react";
 import { Tree } from "react-organizational-chart";
 import DayBar from "./DayBar";
 import { Tag, TagLabel, TagCloseButton, Textarea } from "@chakra-ui/react";
-import { IoIosArrowDropdown, IoIosArrowDropup } from "react-icons/io";
-import { IoMenu, IoSettingsSharp, IoHome  } from "react-icons/io5";
-import { FaPlus, FaCalendarAlt, FaUser, FaShoppingBasket } from "react-icons/fa";
+import { IoIosArrowDropdown, IoIosArrowDropup, IoMdHelp } from "react-icons/io";
+import { IoMenu, IoSettingsSharp, IoHome } from "react-icons/io5";
+import {
+  FaPlus,
+  FaCalendarAlt,
+  FaUser,
+  FaShoppingBasket,
+} from "react-icons/fa";
 import {
   Modal,
   ModalOverlay,
@@ -24,7 +29,7 @@ import {
   DrawerOverlay,
   DrawerContent,
   DrawerCloseButton,
-  useToast
+  useToast,
 } from "@chakra-ui/react";
 
 import { ImTree, ImEnlarge2 } from "react-icons/im";
@@ -40,8 +45,9 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 //! Reverse order of pages in order to show latest day on top
 //! Add New Node Type -> Retrospect. To show what you would have done differently in retrospect and how it could / would have gone
-//! Allow filtering by month of the year on calender month click
+//! Add starred option to pages on day bar to star certain days
 
+//* Allow filtering by month of the year on calender month click [DONE]
 //* Left Click open info about node, right click -> manage node [DONE]
 //* Add expand icon on top right [DONE]
 //* Make DayBar container scrollable [DONE]
@@ -67,9 +73,13 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
   const [filteredMonths, setFilteredMonths] = useState([]);
   const [showFilteredMonths, setShowFilteredMonths] = useState(false);
   const [currFilteredMonth, setCurrFilteredMonth] = useState("");
-  
+
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { isOpen: isOpenDrawer, onOpen: onOpenDrawer, onClose: onCloseDrawer } = useDisclosure()
+  const {
+    isOpen: isOpenDrawer,
+    onOpen: onOpenDrawer,
+    onClose: onCloseDrawer,
+  } = useDisclosure();
 
   const toast = useToast();
 
@@ -98,12 +108,12 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     };
 
     toast({
-        position: "top",
-        title: "New Entry Added!",
-        description: dateToAdd === null ? TestDate : dateToAdd,
-        status: "success",
-        duration: 3000,
-        isClosable: true
+      position: "top",
+      title: "New Entry Added!",
+      description: dateToAdd === null ? TestDate : dateToAdd,
+      status: "success",
+      duration: 3000,
+      isClosable: true,
     });
 
     setPageDetails("");
@@ -266,7 +276,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     const formattedToday = dd + "/" + mm + "/" + yyyy;
 
     return formattedToday;
-  }
+  };
 
   const changeDate = (date) => {
     const formattedToday = convertDateFormat(date);
@@ -289,16 +299,16 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
 
     const monthsFiltered = [];
 
-    for(let i = 0; i < pages.length; i++){
-        if(pages[i].date.includes(dateToCheck)){
-            monthsFiltered.push(pages[i]);
-        }
+    for (let i = 0; i < pages.length; i++) {
+      if (pages[i].date.includes(dateToCheck)) {
+        monthsFiltered.push(pages[i]);
+      }
     }
 
     setFilteredMonths(monthsFiltered);
     setShowFilteredMonths(true);
     setCurrFilteredMonth(dateToCheck);
-  }
+  };
 
   const closeDayModal = () => {
     setDateToAdd(null);
@@ -309,13 +319,15 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     // Convert arrays to sets to remove duplicates
     const set1 = new Set(arr1);
     const set2 = new Set(arr2);
-  
+
     // Create an intersection set by filtering elements present in both sets
-    const intersectionSet = new Set([...set1].filter((value) => set2.has(value)));
-  
+    const intersectionSet = new Set(
+      [...set1].filter((value) => set2.has(value))
+    );
+
     // Convert the intersection set back to an array
     const intersectionArray = Array.from(intersectionSet);
-  
+
     return intersectionArray;
   }
 
@@ -323,70 +335,49 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     setFilteredMonths([]);
     setShowFilteredMonths(false);
     setCurrFilteredMonth("");
-  }
+  };
 
   const renderFilters = () => {
-    if(showFilteredArray && showFilteredMonths){
-        return getArrayIntersection(filteredArray, filteredMonths).map((page) => (
-            <div
-              key={page.id}
-              onClick={() => setSelectedDayBar(page.id)}
-            >
-              <DayBar
-                page={page}
-                highlighted={page.id === selectedDayBar}
-              />
-            </div>
-        ))
-    }
-    else{
-        if(showFilteredArray){
-            return filteredArray.map((page) => (
-                <div
-                  key={page.id}
-                  onClick={() => setSelectedDayBar(page.id)}
-                >
-                  <DayBar
-                    page={page}
-                    highlighted={page.id === selectedDayBar}
-                  />
-                </div>
-            ))
-        }
+    if (showFilteredArray && showFilteredMonths) {
+      return getArrayIntersection(filteredArray, filteredMonths).map((page) => (
+        <div key={page.id} onClick={() => setSelectedDayBar(page.id)}>
+          <DayBar page={page} highlighted={page.id === selectedDayBar} />
+        </div>
+      ));
+    } else {
+      if (showFilteredArray) {
+        return filteredArray.map((page) => (
+          <div key={page.id} onClick={() => setSelectedDayBar(page.id)}>
+            <DayBar page={page} highlighted={page.id === selectedDayBar} />
+          </div>
+        ));
+      }
 
-        if(showFilteredMonths){
-            return filteredMonths.map((page) => (
-                <div
-                  key={page.id}
-                  onClick={() => setSelectedDayBar(page.id)}
-                >
-                  <DayBar
-                    page={page}
-                    highlighted={page.id === selectedDayBar}
-                  />
-                </div>
-            ))
-        }
-        else{
-            return pages.map((page) => (
-                <div
-                  key={page.id}
-                  onClick={() => setSelectedDayBar(page.id)}
-                >
-                  <DayBar
-                    page={page}
-                    highlighted={page.id === selectedDayBar}
-                  />
-                </div>
-            ))
-        }
+      if (showFilteredMonths) {
+        return filteredMonths.map((page) => (
+          <div key={page.id} onClick={() => setSelectedDayBar(page.id)}>
+            <DayBar page={page} highlighted={page.id === selectedDayBar} />
+          </div>
+        ));
+      } else {
+        return pages.map((page) => (
+          <div key={page.id} onClick={() => setSelectedDayBar(page.id)}>
+            <DayBar page={page} highlighted={page.id === selectedDayBar} />
+          </div>
+        ));
+      }
     }
-  }
+  };
 
   return (
     <>
       <div class="bg-[#F1E8D7] w-full h-screen p-5 font-dmMono">
-            <p onClick={onOpenDrawer} className='text-3xl fixed top-1 left-5 text-[#746C59] hover:cursor-pointer'><IoMenu /></p>
+        <p
+          onClick={onOpenDrawer}
+          className="text-3xl fixed top-1 left-5 text-[#746C59] hover:cursor-pointer"
+        >
+          <IoMenu />
+        </p>
         <div class="flex gap-3 w-full">
           <div class="flex flex-col gap-3 w-[50%] h-[95vh] mt-4">
             <div class="relative bg-[#FAF6EC] w-full h-[100px] border-[#746C59] border-[2px] flex items-center p-3 rounded-md font-bold">
@@ -461,17 +452,19 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
                     </p>
                   </Tooltip>
                 </div>
-                {showFilteredMonths ? <Tag
-                        size='lg'
-                        borderRadius='full'
-                        variant='solid'
-                        colorScheme='yellow'
-                        className='hover:cursor-pointer'
-                        onClick={() => removeMonthFilter()}
-                        >
-                        <TagLabel>{currFilteredMonth}</TagLabel>
-                        {showFilteredMonths ? <TagCloseButton /> : null}
-                </Tag> : null}
+                {showFilteredMonths ? (
+                  <Tag
+                    size="lg"
+                    borderRadius="full"
+                    variant="solid"
+                    colorScheme="yellow"
+                    className="hover:cursor-pointer"
+                    onClick={() => removeMonthFilter()}
+                  >
+                    <TagLabel>{currFilteredMonth}</TagLabel>
+                    {showFilteredMonths ? <TagCloseButton /> : null}
+                  </Tag>
+                ) : null}
                 <div
                   onClick={() => setCalendarOpen(!calendarOpen)}
                   class="hover:cursor-pointer rounded-full mr-6 w-[60px] border-2 border-[#746C59] h-[60px] bg-[#EEE1BF] flex items-center justify-center"
@@ -496,7 +489,6 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
               ) : null}
 
               {renderFilters()}
-
             </div>
           </div>
 
@@ -592,12 +584,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
         </ModalContent>
       </Modal>
 
-      
-      <Drawer
-        isOpen={isOpenDrawer}
-        placement='left'
-        onClose={onCloseDrawer}
-      >
+      <Drawer isOpen={isOpenDrawer} placement="left" onClose={onCloseDrawer}>
         <DrawerOverlay />
         <DrawerContent>
           <DrawerCloseButton />
@@ -605,23 +592,31 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
 
           <DrawerBody>
             <div className="flex flex-col gap-5">
-                <Button leftIcon={<IoHome />}>Home</Button>
-                <Button leftIcon={<FaUser />}>Profile</Button>
-                <Button leftIcon={<FaShoppingBasket />} colorScheme="green">Shop</Button>
-                <Button leftIcon={<IoSettingsSharp />} colorScheme="blue" variant='outline'>Settings</Button>
+              <Button leftIcon={<IoHome />}>Home</Button>
+              <Button leftIcon={<FaUser />}>Profile</Button>
+              <Button leftIcon={<FaShoppingBasket />} colorScheme="green">
+                Shop
+              </Button>
+              <Button leftIcon={<IoMdHelp />} colorScheme="yellow">
+                Help
+              </Button>
+              <Button
+                leftIcon={<IoSettingsSharp />}
+                colorScheme="blue"
+                variant="outline"
+              >
+                Settings
+              </Button>
             </div>
           </DrawerBody>
 
           <DrawerFooter>
-            <Button variant='outline' mr={3} onClick={onCloseDrawer}>
+            <Button variant="outline" mr={3} onClick={onCloseDrawer}>
               Cancel
             </Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
-
-
-
     </>
   );
 };
