@@ -3,8 +3,8 @@ import { Tree } from "react-organizational-chart";
 import DayBar from "./DayBar";
 import { Tag, TagLabel, TagCloseButton, Textarea } from "@chakra-ui/react";
 import { IoIosArrowDropdown, IoIosArrowDropup } from "react-icons/io";
-import { IoMenu } from "react-icons/io5";
-import { FaPlus, FaCalendarAlt } from "react-icons/fa";
+import { IoMenu, IoSettingsSharp, IoHome  } from "react-icons/io5";
+import { FaPlus, FaCalendarAlt, FaUser, FaShoppingBasket } from "react-icons/fa";
 import {
   Modal,
   ModalOverlay,
@@ -16,7 +16,15 @@ import {
   useDisclosure,
   Button,
   Input,
-  Tooltip
+  Tooltip,
+  Drawer,
+  DrawerBody,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
+  useToast
 } from "@chakra-ui/react";
 
 import { ImTree, ImEnlarge2 } from "react-icons/im";
@@ -59,7 +67,11 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
   const [filteredMonths, setFilteredMonths] = useState([]);
   const [showFilteredMonths, setShowFilteredMonths] = useState(false);
   const [currFilteredMonth, setCurrFilteredMonth] = useState("");
+  
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isOpenDrawer, onOpen: onOpenDrawer, onClose: onCloseDrawer } = useDisclosure()
+
+  const toast = useToast();
 
   const TestDate = "03/01/2024"; //! replace w/ curr date
 
@@ -84,6 +96,15 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
       title: pageTitle,
       details: pageDetails,
     };
+
+    toast({
+        position: "top",
+        title: "New Entry Added!",
+        description: dateToAdd === null ? TestDate : dateToAdd,
+        status: "success",
+        duration: 3000,
+        isClosable: true
+    });
 
     setPageDetails("");
     setPageTitle("");
@@ -365,7 +386,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
   return (
     <>
       <div class="bg-[#F1E8D7] w-full h-screen p-5 font-dmMono">
-            <p className='text-3xl fixed top-1 left-5 text-[#746C59] hover:cursor-pointer'><IoMenu /></p>
+            <p onClick={onOpenDrawer} className='text-3xl fixed top-1 left-5 text-[#746C59] hover:cursor-pointer'><IoMenu /></p>
         <div class="flex gap-3 w-full">
           <div class="flex flex-col gap-3 w-[50%] h-[95vh] mt-4">
             <div class="relative bg-[#FAF6EC] w-full h-[100px] border-[#746C59] border-[2px] flex items-center p-3 rounded-md font-bold">
@@ -570,6 +591,37 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      
+      <Drawer
+        isOpen={isOpenDrawer}
+        placement='left'
+        onClose={onCloseDrawer}
+      >
+        <DrawerOverlay />
+        <DrawerContent>
+          <DrawerCloseButton />
+          <DrawerHeader>Hey Miran!</DrawerHeader>
+
+          <DrawerBody>
+            <div className="flex flex-col gap-5">
+                <Button leftIcon={<IoHome />}>Home</Button>
+                <Button leftIcon={<FaUser />}>Profile</Button>
+                <Button leftIcon={<FaShoppingBasket />} colorScheme="green">Shop</Button>
+                <Button leftIcon={<IoSettingsSharp />} colorScheme="blue" variant='outline'>Settings</Button>
+            </div>
+          </DrawerBody>
+
+          <DrawerFooter>
+            <Button variant='outline' mr={3} onClick={onCloseDrawer}>
+              Cancel
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+
+
     </>
   );
 };
