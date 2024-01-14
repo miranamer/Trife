@@ -5,15 +5,15 @@ import { ChakraProvider } from '@chakra-ui/react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import MainPage from './components/MainPage';
 
-type page = {
+export type page = {
   id: number,
   date: string,
   node: node,
-  title?: string //! Add this to MainPage functionality of adding new days
+  title?: string //* Add this to MainPage functionality of adding new days [DONE]
   details?: string
 }
 
-type node = {
+export type node = {
   value: string
   children: node[]
   nodeStyle?: string
@@ -26,24 +26,26 @@ type node = {
   location?: string
 }
 
+export const startNode: node = {
+  value: "Start",
+  children: [],
+  nodeStyle: "StyledNodeNormal",
+  moodStyle: "moodNormal",
+  isRoot: true,
+  mood: "",
+  tags: [],
+  details: "",
+  media: [
+    {
+    original: "https://picsum.photos/id/1018/1000/600/",
+    thumbnail: "https://picsum.photos/id/1018/250/150/",
+  }
+],
+}
+
 function App() {
 
-  const startNode: node = {
-    value: "Start",
-    children: [],
-    nodeStyle: "StyledNodeNormal",
-    moodStyle: "moodNormal",
-    isRoot: true,
-    mood: "",
-    tags: [],
-    details: "",
-    media: [
-      {
-      original: "https://picsum.photos/id/1018/1000/600/",
-      thumbnail: "https://picsum.photos/id/1018/250/150/",
-    }
-  ],
-  }
+  
   
   const testPage: page = {
     id: 0,
@@ -73,24 +75,6 @@ function App() {
       </>
     );
   };
-
-  const debugMenu = () => {
-    console.log('PagePtr: ', pagePtr);
-    console.log('Page Length: ', pages.length);
-  }
-
-  const incrementPagePointer = () => {
-    setPagePtr(pagePtr + 1);
-  }
-
-  const decrementPagePointer = () => {
-    setPagePtr(pagePtr - 1);
-  }
-
-  //<div className="p-10">
-  //<h1 className='text-center mb-10 text-3xl font-bold text-orange-400'>{pages[pagePtr].date}</h1>
-  //<Tree label={""} lineWidth='3px' lineColor='#b794ec' lineBorderRadius='10px'>{showTree(pages[pagePtr].node)}</Tree>
-  //</div>
 
   return (
     <>
