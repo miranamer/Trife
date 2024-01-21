@@ -39,6 +39,7 @@ import FilterBox from "./FilterBox";
 import Calendar from "react-calendar";
 import TextView from "./TextView";
 import { node, page, startNode } from "../App.tsx";
+import ChainViewTree from "./ChainViewTree.tsx";
 
 type ValuePiece = Date | null;
 
@@ -86,6 +87,11 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
   const toast = useToast();
 
   const TestDate = "03/01/2024"; //! replace w/ curr date
+
+  const monthMap = {'01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', 
+                    '05': 'May', '06': 'Jun', '07': 'Jul', 
+                    '08': 'Aug', '09': 'Sep', 
+                    '10': 'Oct', '11': 'Nov', '12': 'Dec'}
 
   const addNewDay = (dateToAdd = null) => {
     for (let i = 0; i < pages.length; i++) {
@@ -198,7 +204,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
   };
 
   const searchForDays = (e) => {
-    //! Add checking searchText in page.title and page.details
+    //! Add checking searchText in page.title and page.details [DONE]
     // if no, check if search string is non empty
     // if yes, search for all days where any node contains the search string
 
@@ -206,14 +212,13 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
 
     const filteredDays = [];
 
-    if (searchText === "" && selectedFilters.length == 0) {
-      console.log("CASE 4");
+    if (searchText === "" && selectedFilters.length == 0) { // No Filters + No Text = Reset Filters
       resetFilters();
     } else if (searchText != "" && selectedFilters.length == 0) {
       // search + no filters
       for (let i = 0; i < pages.length; i++) {
-        // check for searchText in Title (when I add it)
-        // check for searchText in nodes
+        // check for searchText in Title (when I add it) [DONE]
+        // check for searchText in nodes [DONE]
         const currTree = pages[i].node;
         if (
           traverseTree_SearchText(searchText.toLowerCase(), currTree) ||
@@ -222,7 +227,6 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
         ) {
           filteredDays.push(pages[i]);
         }
-        console.log("->", traverseTree_SearchText(searchText, currTree));
       }
       console.log(filteredDays);
       setFilteredArray(filteredDays);
@@ -230,8 +234,8 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     } else if (searchText != "" && selectedFilters.length > 0) {
       // search with filters
       for (let i = 0; i < pages.length; i++) {
-        // check for searchText in Title (when I add it)
-        // check for searchText in nodes
+        // check for searchText in Title (when I add it) [DONE]
+        // check for searchText in nodes [DONE]
         const currTree = pages[i].node;
         if (
           traverseTree_Filters(selectedFilters, currTree) === true &&
@@ -241,12 +245,6 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
         ) {
           filteredDays.push(pages[i]);
         }
-        console.log(
-          "a",
-          traverseTree_Filters(selectedFilters, currTree),
-          selectedFilters
-        );
-        console.log("b", traverseTree_SearchText(searchText, currTree));
       }
 
       setFilteredArray(filteredDays);
@@ -254,8 +252,6 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     } else if (searchText === "" && selectFilter.length > 0) {
       // no search + filters
       for (let i = 0; i < pages.length; i++) {
-        // check for searchText in Title (when I add it)
-        // check for searchText in nodes
         const currTree = pages[i].node;
         if (traverseTree_Filters(selectedFilters, currTree)) {
           filteredDays.push(pages[i]);
@@ -280,7 +276,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     return formattedToday;
   };
 
-  const changeDate = (date) => {
+  const addPageWithCalendar = (date) => {
     const formattedToday = convertDateFormat(date);
 
     for (let i = 0; i < pages.length; i++) {
@@ -297,7 +293,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
 
   const filterByMonth = (date) => {
     const formattedDate = convertDateFormat(date);
-    const dateToCheck = formattedDate.substring(3, 10);
+    const dateToCheck = formattedDate.substring(3, 10); // month and year we are looking for (e.g "02/2024")
 
     const monthsFiltered = [];
 
@@ -373,49 +369,25 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
 
 
 
-  const renderChainView = () => { //? turn these repeated parts into a component
+  const renderChainView = () => {
     if (showFilteredArray && showFilteredMonths) {
       return getArrayIntersection(filteredArray, filteredMonths).map((page) => (
-        <div className='flex flex-col gap-10 items-center justify-center'>
-          <h1 className="font-bold text-xl text-[#746C59]">{page.date}</h1>
-          <Tree label={""} lineWidth="3px" lineColor="#b794ec" lineBorderRadius="10px">
-            {showTree(page.node)}
-          </Tree>
-          <div className="h-[1px] w-[80%] border-0 border-t-2 border-t-[#746C59] border-dashed"></div> text-[#746C59]
-        </div>
+        <ChainViewTree page={page} showTree={showTree} />
       ));
     } else {
       if (showFilteredArray) {
         return filteredArray.map((page) => (
-          <div className='flex flex-col gap-10 items-center justify-center'>
-            <h1 className="font-bold text-xl text-[#746C59]">{page.date}</h1>
-          <Tree label={""} lineWidth="3px" lineColor="#b794ec" lineBorderRadius="10px">
-            {showTree(page.node)}
-          </Tree>
-          <div className="h-[1px] w-[80%] border-0 border-t-2 border-t-[#746C59] border-dashed"></div>
-        </div>
+          <ChainViewTree page={page} showTree={showTree} />
         ));
       }
 
       if (showFilteredMonths) {
         return filteredMonths.map((page) => (
-          <div className='flex flex-col gap-10 items-center justify-center'>
-            <h1 className="font-bold text-xl text-[#746C59]">{page.date}</h1>
-          <Tree label={""} lineWidth="3px" lineColor="#b794ec" lineBorderRadius="10px">
-            {showTree(page.node)}
-          </Tree>
-          <div className="h-[1px] w-[80%] border-0 border-t-2 border-t-[#746C59] border-dashed"></div>
-        </div>
+          <ChainViewTree page={page} showTree={showTree} />
         ));
       } else {
         return pages.map((page) => (
-          <div className='flex flex-col gap-10 items-center justify-center'>
-            <h1 className="font-bold text-xl text-[#746C59]">{page.date}</h1>
-          <Tree label={""} lineWidth="3px" lineColor="#b794ec" lineBorderRadius="10px">
-            {showTree(page.node)}
-          </Tree>
-          <div className="h-[1px] w-[85%] border-0 border-t-2 border-t-[#746C59] border-dashed"></div>
-        </div>
+          <ChainViewTree page={page} showTree={showTree} />
         ));
       }
     }
@@ -513,7 +485,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
                     className="hover:cursor-pointer"
                     onClick={() => removeMonthFilter()}
                   >
-                    <TagLabel>{currFilteredMonth}</TagLabel>
+                    <TagLabel>{monthMap[currFilteredMonth.substring(0, 2)]} - {currFilteredMonth.substring(3, 7)}</TagLabel>
                     {showFilteredMonths ? <TagCloseButton /> : null}
                   </Tag>
                 ) : null}
@@ -532,7 +504,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
               {calendarOpen ? (
                 <div className="flex w-[300px] absolute border-[#746C59] border-[2px] bg-white text-black p-2 rounded-md right-2 top-[10%]">
                   <Calendar
-                    onClickDay={(value) => changeDate(value)}
+                    onClickDay={(value) => addPageWithCalendar(value)}
                     onChange={setCalendarDate}
                     value={calendarDate}
                     onClickMonth={(value) => filterByMonth(value)}
@@ -547,7 +519,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
           <div
             class={`relative flex flex-col w-[50%] h-[95vh] mt-4 ${
               treeView === true ? "treeViewBG" : "bg-[#FAF6EC]"
-            } rounded-md border-[#746C59] border-[2px] p-2 overflow-scroll`}
+            } rounded-md border-[#746C59] border-[2px] p-2 overflow-scroll no-scrollbar`}
           >
             <div className="absolute top-[10px] left-[10px] flex gap-2">
               <Tooltip label="Tree View" bg="#746C59" textColor="#EEE1BF">
