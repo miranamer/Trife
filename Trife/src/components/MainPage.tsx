@@ -9,6 +9,7 @@ import {
   FaCalendarAlt,
   FaUser,
   FaShoppingBasket,
+  FaLink
 } from "react-icons/fa";
 import {
   Modal,
@@ -72,6 +73,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
   const [treeView, setTreeView] = useState<boolean>(true);
   const [filteredMonths, setFilteredMonths] = useState([]);
   const [showFilteredMonths, setShowFilteredMonths] = useState(false);
+  const [chainView, setChainView] = useState(false);
   const [currFilteredMonth, setCurrFilteredMonth] = useState("");
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -369,6 +371,56 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     }
   };
 
+
+
+  const renderChainView = () => { //? turn these repeated parts into a component
+    if (showFilteredArray && showFilteredMonths) {
+      return getArrayIntersection(filteredArray, filteredMonths).map((page) => (
+        <div className='flex flex-col gap-10 items-center justify-center'>
+          <h1 className="font-bold text-xl text-[#746C59]">{page.date}</h1>
+          <Tree label={""} lineWidth="3px" lineColor="#b794ec" lineBorderRadius="10px">
+            {showTree(page.node)}
+          </Tree>
+          <div className="h-[1px] w-[80%] border-0 border-t-2 border-t-[#746C59] border-dashed"></div> text-[#746C59]
+        </div>
+      ));
+    } else {
+      if (showFilteredArray) {
+        return filteredArray.map((page) => (
+          <div className='flex flex-col gap-10 items-center justify-center'>
+            <h1 className="font-bold text-xl text-[#746C59]">{page.date}</h1>
+          <Tree label={""} lineWidth="3px" lineColor="#b794ec" lineBorderRadius="10px">
+            {showTree(page.node)}
+          </Tree>
+          <div className="h-[1px] w-[80%] border-0 border-t-2 border-t-[#746C59] border-dashed"></div>
+        </div>
+        ));
+      }
+
+      if (showFilteredMonths) {
+        return filteredMonths.map((page) => (
+          <div className='flex flex-col gap-10 items-center justify-center'>
+            <h1 className="font-bold text-xl text-[#746C59]">{page.date}</h1>
+          <Tree label={""} lineWidth="3px" lineColor="#b794ec" lineBorderRadius="10px">
+            {showTree(page.node)}
+          </Tree>
+          <div className="h-[1px] w-[80%] border-0 border-t-2 border-t-[#746C59] border-dashed"></div>
+        </div>
+        ));
+      } else {
+        return pages.map((page) => (
+          <div className='flex flex-col gap-10 items-center justify-center'>
+            <h1 className="font-bold text-xl text-[#746C59]">{page.date}</h1>
+          <Tree label={""} lineWidth="3px" lineColor="#b794ec" lineBorderRadius="10px">
+            {showTree(page.node)}
+          </Tree>
+          <div className="h-[1px] w-[85%] border-0 border-t-2 border-t-[#746C59] border-dashed"></div>
+        </div>
+        ));
+      }
+    }
+  };
+
   return (
     <>
       <div class="bg-[#F1E8D7] w-full h-screen p-5 font-dmMono">
@@ -495,7 +547,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
           <div
             class={`relative flex flex-col w-[50%] h-[95vh] mt-4 ${
               treeView === true ? "treeViewBG" : "bg-[#FAF6EC]"
-            } rounded-md border-[#746C59] border-[2px] p-2`}
+            } rounded-md border-[#746C59] border-[2px] p-2 overflow-scroll`}
           >
             <div className="absolute top-[10px] left-[10px] flex gap-2">
               <Tooltip label="Tree View" bg="#746C59" textColor="#EEE1BF">
@@ -516,6 +568,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
                 </p>
               </Tooltip>
             </div>
+            
             {treeView ? (
               <>
                 <div className="absolute top-[10px] right-[10px] flex gap-2">
@@ -524,13 +577,18 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
                       <ImEnlarge2 />
                     </p>
                   </Tooltip>
+                  <Tooltip label="Chain" bg="#746C59" textColor="#EEE1BF">
+                    <p onClick={() => setChainView(!chainView)} className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]">
+                      <FaLink />
+                    </p>
+                  </Tooltip>
                 </div>
                 <div class="w-full h-[40px] flex items-center justify-center">
                   <h1 class="font-semibold text-[#746C59] underline text-xl">
-                    {pages[selectedDayBar].date}
+                    {chainView === false ? pages[selectedDayBar].date : null}
                   </h1>
                 </div>
-                {selectedDayBar != null ? (
+                {chainView === true ? <div className='mt-[5%] flex flex-col gap-10'>{renderChainView()}</div> : selectedDayBar != null ? (
                   <div className="mt-[10%]">
                     <Tree
                       label={""}
