@@ -9,7 +9,7 @@ import {
   FaCalendarAlt,
   FaUser,
   FaShoppingBasket,
-  FaLink
+  FaLink,
 } from "react-icons/fa";
 import {
   Modal,
@@ -47,7 +47,7 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 //! Reverse order of pages in order to show latest day on top
 //! Add New Node Type -> Retrospect. To show what you would have done differently in retrospect and how it could / would have gone
-//! Add starred option to pages on day bar to star certain days
+//! Find way to truncate tree so it does not go past page width and height in non-expanded tree view
 
 //* Allow filtering by month of the year on calender month click [DONE]
 //* Left Click open info about node, right click -> manage node [DONE]
@@ -57,6 +57,7 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 //* - General Text Entry [DONE]
 //* - Image Gallery [DONE]
 //* - Show All The Selected Tags for the Node [DONE]
+//* Chain trees to show all trees in one go [DONE]
 
 const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
   const [selectedDayBar, setSelectedDayBar] = useState<number>(0);
@@ -88,15 +89,27 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
 
   const TestDate = "03/01/2024"; //! replace w/ curr date
 
-  const monthMap = {'01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', 
-                    '05': 'May', '06': 'Jun', '07': 'Jul', 
-                    '08': 'Aug', '09': 'Sep', 
-                    '10': 'Oct', '11': 'Nov', '12': 'Dec'}
+  const monthMap = {
+    "01": "Jan",
+    "02": "Feb",
+    "03": "Mar",
+    "04": "Apr",
+    "05": "May",
+    "06": "Jun",
+    "07": "Jul",
+    "08": "Aug",
+    "09": "Sep",
+    "10": "Oct",
+    "11": "Nov",
+    "12": "Dec",
+  };
 
   const addNewDay = (dateToAdd = null) => {
     for (let i = 0; i < pages.length; i++) {
+      // checking if entry on that day already exists
       if (dateToAdd === null) {
         if (pages[i].date === TestDate) {
+          // clicking the ADD button to add entry for current date
           alert("Already Have An Entry Today!");
           return;
         }
@@ -143,9 +156,9 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
 
   const addSelectedTag = (selectedTag) => {
     if (selectedFilters.includes(selectedTag) == false) {
-      setSelectedFilters([...selectedFilters, selectedTag]);
+      setSelectedFilters([...selectedFilters, selectedTag]); // add to curr selected filters if not already in
     } else {
-      setSelectedFilters(selectedFilters.filter((curr) => curr != selectedTag));
+      setSelectedFilters(selectedFilters.filter((curr) => curr != selectedTag)); // remove if already in
     }
   };
 
@@ -176,11 +189,18 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
       return true;
     }
 
+    for (let i = 0; i < node.children.length; i++) {
+      if (traverseTree_SearchText(searchText, node.children[i])) {
+        return true;
+      }
+    }
+
+    /* OLD METHOD
     if (Array.isArray(node.children)) {
       return node.children.some((child) =>
         traverseTree_SearchText(searchText, child)
-      );
-    }
+    );
+    */
 
     return false;
   };
@@ -194,11 +214,19 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
       }
     }
 
+    for(let i = 0; i < node.children.length; i++){
+      if(traverseTree_Filters(filters, node.children[i])){
+        return true;
+      }
+    }
+
+    /* OLD METHOD
     if (Array.isArray(node.children)) {
       return node.children.some((child) =>
         traverseTree_Filters(filters, child)
       );
     }
+    */
 
     return false;
   };
@@ -212,7 +240,8 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
 
     const filteredDays = [];
 
-    if (searchText === "" && selectedFilters.length == 0) { // No Filters + No Text = Reset Filters
+    if (searchText === "" && selectedFilters.length == 0) {
+      // No Filters + No Text = Reset Filters
       resetFilters();
     } else if (searchText != "" && selectedFilters.length == 0) {
       // search + no filters
@@ -367,8 +396,6 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     }
   };
 
-
-
   const renderChainView = () => {
     if (showFilteredArray && showFilteredMonths) {
       return getArrayIntersection(filteredArray, filteredMonths).map((page) => (
@@ -461,6 +488,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
                 isMoodFilter={selectedFilter === "mood" ? true : false}
                 tags={tags}
                 moods={moods}
+                setSelectedFilter={setSelectedFilter}
               />
             ) : null}
 
@@ -485,7 +513,10 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
                     className="hover:cursor-pointer"
                     onClick={() => removeMonthFilter()}
                   >
-                    <TagLabel>{monthMap[currFilteredMonth.substring(0, 2)]} - {currFilteredMonth.substring(3, 7)}</TagLabel>
+                    <TagLabel>
+                      {monthMap[currFilteredMonth.substring(0, 2)]} -{" "}
+                      {currFilteredMonth.substring(3, 7)}
+                    </TagLabel>
                     {showFilteredMonths ? <TagCloseButton /> : null}
                   </Tag>
                 ) : null}
@@ -540,7 +571,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
                 </p>
               </Tooltip>
             </div>
-            
+
             {treeView ? (
               <>
                 <div className="absolute top-[10px] right-[10px] flex gap-2">
@@ -550,7 +581,10 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
                     </p>
                   </Tooltip>
                   <Tooltip label="Chain" bg="#746C59" textColor="#EEE1BF">
-                    <p onClick={() => setChainView(!chainView)} className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]">
+                    <p
+                      onClick={() => setChainView(!chainView)}
+                      className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]"
+                    >
                       <FaLink />
                     </p>
                   </Tooltip>
@@ -560,7 +594,11 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
                     {chainView === false ? pages[selectedDayBar].date : null}
                   </h1>
                 </div>
-                {chainView === true ? <div className='mt-[5%] flex flex-col gap-10'>{renderChainView()}</div> : selectedDayBar != null ? (
+                {chainView === true ? (
+                  <div className="mt-[5%] flex flex-col gap-10">
+                    {renderChainView()}
+                  </div>
+                ) : selectedDayBar != null ? (
                   <div className="mt-[10%]">
                     <Tree
                       label={""}
@@ -575,7 +613,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
               </>
             ) : (
               <div className="flex mt-[10%] ml-[5%]">
-                <TextView />
+                <TextView page={pages[selectedDayBar]} selectedDayBar={selectedDayBar} />
               </div>
             )}
           </div>
