@@ -214,8 +214,8 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
       }
     }
 
-    for(let i = 0; i < node.children.length; i++){
-      if(traverseTree_Filters(filters, node.children[i])){
+    for (let i = 0; i < node.children.length; i++) {
+      if (traverseTree_Filters(filters, node.children[i])) {
         return true;
       }
     }
@@ -420,6 +420,60 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     }
   };
 
+  const renderRightSide = () => { //? this is rendering text view and tree view
+    if (treeView) { // maybe turn this jsx into a component
+      return (
+        <>
+          <div className="absolute top-[10px] right-[10px] flex gap-2">
+            <Tooltip label="Enlarge" bg="#746C59" textColor="#EEE1BF">
+              <p className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]">
+                <ImEnlarge2 />
+              </p>
+            </Tooltip>
+            <Tooltip label="Chain" bg="#746C59" textColor="#EEE1BF">
+              <p
+                onClick={() => setChainView(!chainView)}
+                className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]"
+              >
+                <FaLink />
+              </p>
+            </Tooltip>
+          </div>
+          <div class="w-full h-[40px] flex items-center justify-center">
+            <h1 class="font-semibold text-[#746C59] underline text-xl">
+              {chainView === false ? pages[selectedDayBar].date : null}
+            </h1>
+          </div>
+          {chainView === true ? (
+            <div className="mt-[5%] flex flex-col gap-10">
+              {renderChainView()}
+            </div>
+          ) : selectedDayBar != null ? (
+            <div className="mt-[10%]">
+              <Tree
+                label={""}
+                lineWidth="3px"
+                lineColor="#b794ec"
+                lineBorderRadius="10px"
+              >
+                {showTree(pages[selectedDayBar].node)}
+              </Tree>
+            </div>
+          ) : null}
+        </>
+      );
+    } else {
+      return (
+        <div className="flex mt-[10%] ml-[5%]">
+          <TextView
+            page={pages[selectedDayBar]}
+            selectedDayBar={selectedDayBar}
+          />
+        </div>
+      );
+    }
+  };
+
   return (
     <>
       <div class="bg-[#F1E8D7] w-full h-screen p-5 font-dmMono">
@@ -572,50 +626,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
               </Tooltip>
             </div>
 
-            {treeView ? (
-              <>
-                <div className="absolute top-[10px] right-[10px] flex gap-2">
-                  <Tooltip label="Enlarge" bg="#746C59" textColor="#EEE1BF">
-                    <p className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]">
-                      <ImEnlarge2 />
-                    </p>
-                  </Tooltip>
-                  <Tooltip label="Chain" bg="#746C59" textColor="#EEE1BF">
-                    <p
-                      onClick={() => setChainView(!chainView)}
-                      className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]"
-                    >
-                      <FaLink />
-                    </p>
-                  </Tooltip>
-                </div>
-                <div class="w-full h-[40px] flex items-center justify-center">
-                  <h1 class="font-semibold text-[#746C59] underline text-xl">
-                    {chainView === false ? pages[selectedDayBar].date : null}
-                  </h1>
-                </div>
-                {chainView === true ? (
-                  <div className="mt-[5%] flex flex-col gap-10">
-                    {renderChainView()}
-                  </div>
-                ) : selectedDayBar != null ? (
-                  <div className="mt-[10%]">
-                    <Tree
-                      label={""}
-                      lineWidth="3px"
-                      lineColor="#b794ec"
-                      lineBorderRadius="10px"
-                    >
-                      {showTree(pages[selectedDayBar].node)}
-                    </Tree>
-                  </div>
-                ) : null}
-              </>
-            ) : (
-              <div className="flex mt-[10%] ml-[5%]">
-                <TextView page={pages[selectedDayBar]} selectedDayBar={selectedDayBar} />
-              </div>
-            )}
+            {renderRightSide()}
           </div>
         </div>
       </div>
