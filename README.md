@@ -1,5 +1,5 @@
 <div>
-  <h1>Trife - A new way to journal</h1>
+  <h1>Trife - A contemporary journalling app</h1>
 </div>
 
 
