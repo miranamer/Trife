@@ -45,7 +45,7 @@ type ValuePiece = Date | null;
 
 type Value = ValuePiece | [ValuePiece, ValuePiece];
 
-//! Reverse order of pages in order to show latest day on top
+//! Make dayBar's ordered based on date not just reversed order of arr
 //! Add New Node Type -> Retrospect. To show what you would have done differently in retrospect and how it could / would have gone
 //! Find way to truncate tree so it does not go past page width and height in non-expanded tree view
 
@@ -59,8 +59,10 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 //* - Show All The Selected Tags for the Node [DONE]
 //* Chain trees to show all trees in one go [DONE]
 
-const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
-  const [selectedDayBar, setSelectedDayBar] = useState<number>(0);
+const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
+  const [selectedDayBar, setSelectedDayBar] = useState<number>(
+    pages.length - 1
+  );
   const [selectedFilter, setSelectedFilter] = useState<string>(""); // "tag", "mood", etc -> determines what filter menu to open
   const [selectedFilters, setSelectedFilters] = useState([]); // STORES ALL FILTERS (TAGS, MOODS, ETC)
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
@@ -106,7 +108,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
 
   const addNewDay = (dateToAdd = null) => {
     for (let i = 0; i < pages.length; i++) {
-      // checking if entry on that day already exists
+      // checking if entry on the curr day already exists
       if (dateToAdd === null) {
         if (pages[i].date === TestDate) {
           // clicking the ADD button to add entry for current date
@@ -141,6 +143,7 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     setPageTitle("");
     setPages([...pages, newDay]);
     setSelectedDayBar(pages.length); //^ set selected day bar (page) to newly added one
+    setPagePtr(pages.length);
     setDateToAdd(null);
     onClose();
   };
@@ -364,31 +367,70 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
     setCurrFilteredMonth("");
   };
 
+  const reverseArray = (arr) => {
+    var newArr = [];
+
+    for (let i = arr.length - 1; i > -1; i--) {
+      newArr.push(arr[i]);
+    }
+
+    return newArr;
+  };
+
   const renderFilters = () => {
     if (showFilteredArray && showFilteredMonths) {
-      return getArrayIntersection(filteredArray, filteredMonths).map((page) => (
-        <div key={page.id} onClick={() => setSelectedDayBar(page.id)}>
+      return reverseArray(
+        getArrayIntersection(filteredArray, filteredMonths)
+      ).map((page) => (
+        <div
+          key={page.id}
+          onClick={() => {
+            setSelectedDayBar(page.id);
+            setPagePtr(page.id);
+          }}
+        >
           <DayBar page={page} highlighted={page.id === selectedDayBar} />
         </div>
       ));
     } else {
       if (showFilteredArray) {
-        return filteredArray.map((page) => (
-          <div key={page.id} onClick={() => setSelectedDayBar(page.id)}>
+        let reversedArr = reverseArray(filteredArray);
+        return reversedArr.map((page) => (
+          <div
+            key={page.id}
+            onClick={() => {
+              setSelectedDayBar(page.id);
+              setPagePtr(page.id);
+            }}
+          >
             <DayBar page={page} highlighted={page.id === selectedDayBar} />
           </div>
         ));
       }
 
       if (showFilteredMonths) {
-        return filteredMonths.map((page) => (
-          <div key={page.id} onClick={() => setSelectedDayBar(page.id)}>
+        let reversedArr = reverseArray(filteredMonths);
+        return reversedArr.map((page) => (
+          <div
+            key={page.id}
+            onClick={() => {
+              setSelectedDayBar(page.id);
+              setPagePtr(page.id);
+            }}
+          >
             <DayBar page={page} highlighted={page.id === selectedDayBar} />
           </div>
         ));
       } else {
-        return pages.map((page) => (
-          <div key={page.id} onClick={() => setSelectedDayBar(page.id)}>
+        let reversedArr = reverseArray(pages);
+        return reversedArr.map((page) => (
+          <div
+            key={page.id}
+            onClick={() => {
+              setSelectedDayBar(page.id);
+              setPagePtr(page.id);
+            }}
+          >
             <DayBar page={page} highlighted={page.id === selectedDayBar} />
           </div>
         ));
@@ -398,30 +440,32 @@ const MainPage = ({ pages, showTree, setPages, tags, moods }) => {
 
   const renderChainView = () => {
     if (showFilteredArray && showFilteredMonths) {
-      return getArrayIntersection(filteredArray, filteredMonths).map((page) => (
-        <ChainViewTree page={page} showTree={showTree} />
-      ));
+      return reverseArray(
+        getArrayIntersection(filteredArray, filteredMonths)
+      ).map((page) => <ChainViewTree page={page} showTree={showTree} />);
     } else {
       if (showFilteredArray) {
-        return filteredArray.map((page) => (
+        return reverseArray(filteredArray).map((page) => (
           <ChainViewTree page={page} showTree={showTree} />
         ));
       }
 
       if (showFilteredMonths) {
-        return filteredMonths.map((page) => (
+        return reverseArray(filteredMonths).map((page) => (
           <ChainViewTree page={page} showTree={showTree} />
         ));
       } else {
-        return pages.map((page) => (
+        return reverseArray(pages).map((page) => (
           <ChainViewTree page={page} showTree={showTree} />
         ));
       }
     }
   };
 
-  const renderRightSide = () => { //? this is rendering text view and tree view
-    if (treeView) { // maybe turn this jsx into a component
+  const renderRightSide = () => {
+    //? this is rendering text view and tree view
+    if (treeView) {
+      // maybe turn this jsx into a component
       return (
         <>
           <div className="absolute top-[10px] right-[10px] flex gap-2">

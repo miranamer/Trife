@@ -31,6 +31,7 @@ import {
   import "react-image-gallery/styles/css/image-gallery.css";
   import { FileUploader } from "react-drag-drop-files";
   import emojiRegex from 'emoji-regex';
+  import type { node } from '../App';
 
 //! Make a secret node type
 //! Add editing to nodes
@@ -90,7 +91,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
             return;
         }
 
-        const nodeToAdd = {
+        const nodeToAdd: node = {
             value: nodeText,
             children: [],
             nodeStyle: choiceToStyleMap[choice - 1],
@@ -98,6 +99,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
             mood: "",
             tags: selectedTags,
             details: "",
+            isRoot: false,
             media: [
                 {
                     original: "https://picsum.photos/id/1018/1000/600/",
@@ -106,33 +108,21 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
             ],
         };
 
-        console.log(nodeToAdd);
-
         node.children.push(nodeToAdd);
         setPages([...pages]);
     }
 
-    const findParentNode = (currentNode, targetNode) => {
-        if (currentNode.children.includes(targetNode)) {
-          return currentNode;
-        }
-        for (const child of currentNode.children) {
-          const parent = findParentNode(child, targetNode);
-          if (parent) {
-            return parent;
-          }
-        }
-        return null;
-    };
-
-    const deleteNode = () => {
-        console.log('Deleting...');
-        const parentNode = findParentNode(pages[pagePtr].node, node);
-        console.log('Parent: ', parentNode);
-
-        if (parentNode) {
-            parentNode.children = parentNode.children.filter((child) => child !== node);
-            setPages([ ...pages ]);
+    const deleteNodeNew = (rootNode: node) => {
+        console.log(pages[pagePtr])
+        for(let i = 0; i < rootNode.children.length; i++){
+            if(rootNode.children[i] == node){
+                rootNode.children = rootNode.children.filter((child) => child !== node);
+                setPages([ ...pages ]);
+                return;
+            }
+            else{
+                deleteNodeNew(rootNode.children[i]);
+            }
         }
     }
 
@@ -305,7 +295,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
                             <p onClick={() => addNewTag()} className='text-green-500 text-4xl hover:cursor-pointer'><FaCheckCircle /></p>
                         </div>
                     </div> : null}
-                    <Button onClick={() => addNode()} colorScheme='green'>Create</Button></div> : <div className="flex items-center justify-center"><Button className='w-full' onClick={() => deleteNode()} colorScheme='red'>Delete</Button></div>}
+                    <Button onClick={() => addNode()} colorScheme='green'>Create</Button></div> : <div className="flex items-center justify-center"><Button className='w-full' onClick={() => deleteNodeNew(pages[pagePtr].node)} colorScheme='red'>Delete</Button></div>}
                 </div>
             </ModalBody>
 

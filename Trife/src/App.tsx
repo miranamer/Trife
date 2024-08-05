@@ -20,7 +20,7 @@ export type node = {
   moodStyle?: string
   isRoot: boolean
   mood: string,
-  tags: [],
+  tags: string[][],
   details: string,
   media: object[],
   location?: string
@@ -48,24 +48,24 @@ function App() {
   
   
   const testPage: page = {
-    id: 0,
-    date: "01/01/2024",
+    id: 1,
+    date: "02/01/2024",
     node: structuredClone(startNode),
     title: "Jane Street",
     details: "Went great, had a lot of fun!"
   }
 
   const testPage2: page = {
-    id: 1,
-    date: "02/01/2024",
+    id: 0,
+    date: "01/01/2024",
     node: structuredClone(startNode),
     title: "Amazon Internship Day 1",
     details: "Really fun, learnt a lot"
   }
 
-  const [pages, setPages] = useState<page[]>([testPage, testPage2]);
-  const [pagePtr, setPagePtr] = useState<number>(0);
-  const [tags, setTags] = useState<string[][]>([['Book Proj', 'blue']])
+  const [pages, setPages] = useState<page[]>([testPage2, testPage]);
+  const [pagePtr, setPagePtr] = useState<number>(pages.length - 1);
+  const [tags, setTags] = useState<string[][]>([['Internships', 'red'], ['Uni', 'blue']])
   const [moods, setMoods] = useState<string[]>([]);
 
   const showTree = (node: node) => {
@@ -81,7 +81,7 @@ function App() {
       <BrowserRouter>
         <ChakraProvider>
           <Routes>
-            <Route path='/' element={<MainPage pages={pages} setPages={setPages} showTree={showTree} tags={tags} moods={moods} />} />
+            <Route path='/' element={<MainPage pages={pages} setPagePtr={setPagePtr} setPages={setPages} showTree={showTree} tags={tags} moods={moods} />} />
           </Routes>
         </ChakraProvider>
       </BrowserRouter>
