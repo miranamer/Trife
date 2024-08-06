@@ -1,4 +1,5 @@
 import React from 'react'
+import type { page } from '../App';
 
 //! Add pencil icon to right of DayBar to allow editing of Title for that day
 //! Add Title parameter to pages to allow Titles for each day -> On click of + button to add new day, make modal for Title

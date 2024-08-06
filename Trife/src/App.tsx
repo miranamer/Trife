@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Node from './components/Node';
 import { Tree, TreeNode } from "react-organizational-chart";
 import { ChakraProvider } from '@chakra-ui/react'
@@ -45,7 +45,27 @@ export const startNode: node = {
 
 function App() {
 
-  
+  useEffect(() => {
+      const storedPages = window.localStorage.getItem('pages');
+
+      if (storedPages) {
+        setPages(JSON.parse(storedPages));
+        let pagesArray = JSON.parse(storedPages);
+        let mxID = 0;
+        
+        for(let i = 0; i < pagesArray.length; i++){
+          if(pagesArray[i]["id"] > mxID){
+            mxID = pagesArray[i]["id"];
+          }
+        }
+
+        setPagePtr(mxID);
+      } 
+      else {
+        window.localStorage.setItem('pages', JSON.stringify([]));
+        setPagePtr(0);
+      }
+  }, [])
   
   const testPage: page = {
     id: 1,
@@ -63,12 +83,14 @@ function App() {
     details: "Really fun, learnt a lot"
   }
 
-  const [pages, setPages] = useState<page[]>([testPage2, testPage]);
-  const [pagePtr, setPagePtr] = useState<number>(pages.length - 1);
-  const [tags, setTags] = useState<string[][]>([['Internships', 'red'], ['Uni', 'blue']])
-  const [moods, setMoods] = useState<string[]>([]);
+  //! ADD TAGS AND MOODS TO LOCALSTORAGE TO PERSIST THEM
 
-  const showTree = (node: node) => {
+  const [pages, setPages] = useState<page[]>([]); // Array of all pages (entries)
+  const [pagePtr, setPagePtr] = useState<number>(0); // ID of currently selected page
+  const [tags, setTags] = useState<string[][]>([['Internships', 'red'], ['Uni', 'blue']]) // Tags Array -> [tagTitle, tagColor]
+  const [moods, setMoods] = useState<string[]>([]); // All Used Moods
+
+  const showTree = (node: node) => { // Recursively draws all nodes by taking in root node as Node itself calls showTree on all children
     return (
       <>
         <Node node={node} showTree={showTree} pages={pages} setPages={setPages} pagePtr={pagePtr} tags={tags} setTags={setTags} moods={moods} setMoods={setMoods} />
@@ -81,7 +103,7 @@ function App() {
       <BrowserRouter>
         <ChakraProvider>
           <Routes>
-            <Route path='/' element={<MainPage pages={pages} setPagePtr={setPagePtr} setPages={setPages} showTree={showTree} tags={tags} moods={moods} />} />
+            <Route path='/' element={<MainPage pages={pages} pagePtr={pagePtr} setPagePtr={setPagePtr} setPages={setPages} showTree={showTree} tags={tags} moods={moods} />} />
           </Routes>
         </ChakraProvider>
       </BrowserRouter>

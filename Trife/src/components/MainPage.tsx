@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tree } from "react-organizational-chart";
 import DayBar from "./DayBar";
 import { Tag, TagLabel, TagCloseButton, Textarea } from "@chakra-ui/react";
@@ -34,6 +34,7 @@ import {
 } from "@chakra-ui/react";
 
 import { ImTree, ImEnlarge2 } from "react-icons/im";
+import { MdDeleteForever } from "react-icons/md";
 import { IoIosPaper } from "react-icons/io";
 import FilterBox from "./FilterBox";
 import Calendar from "react-calendar";
@@ -59,10 +60,31 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 //* - Show All The Selected Tags for the Node [DONE]
 //* Chain trees to show all trees in one go [DONE]
 
-const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
-  const [selectedDayBar, setSelectedDayBar] = useState<number>(
-    pages.length - 1
-  );
+const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods }) => {
+
+
+  useEffect(() => {
+    const storedPages = JSON.parse(window.localStorage.getItem('pages'));
+
+    if(storedPages){
+      let mxID = 0;
+        
+      for(let i = 0; i < storedPages.length; i++){
+        if(storedPages[i]["id"] > mxID){
+          mxID = storedPages[i]["id"];
+        }
+      }
+
+      setSelectedDayBar(mxID);
+    }
+    else{
+      setSelectedDayBar(0);
+    }
+  }, [])
+
+
+
+  const [selectedDayBar, setSelectedDayBar] = useState<number>(0);
   const [selectedFilter, setSelectedFilter] = useState<string>(""); // "tag", "mood", etc -> determines what filter menu to open
   const [selectedFilters, setSelectedFilters] = useState([]); // STORES ALL FILTERS (TAGS, MOODS, ETC)
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
@@ -110,13 +132,13 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
     for (let i = 0; i < pages.length; i++) {
       // checking if entry on the curr day already exists
       if (dateToAdd === null) {
-        if (pages[i].date === TestDate) {
+        if (pages[i]["date"] === TestDate) {
           // clicking the ADD button to add entry for current date
           alert("Already Have An Entry Today!");
           return;
         }
       } else {
-        if (pages[i].date == dateToAdd) {
+        if (pages[i]["date"] == dateToAdd) {
           alert("Already Have An Entry Today!");
         }
       }
@@ -132,7 +154,7 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
 
     toast({
       position: "top",
-      title: "New Entry Added!",
+      title: pageTitle,
       description: dateToAdd === null ? TestDate : dateToAdd,
       status: "success",
       duration: 3000,
@@ -142,10 +164,29 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
     setPageDetails("");
     setPageTitle("");
     setPages([...pages, newDay]);
-    setSelectedDayBar(pages.length); //^ set selected day bar (page) to newly added one
+    window.localStorage.setItem('pages', JSON.stringify([...pages, newDay]));
+    setSelectedDayBar(pages.length); //* Sets selected day bar (entry) to newly added one
     setPagePtr(pages.length);
     setDateToAdd(null);
     onClose();
+  };
+
+  const deleteDay = () => {
+    for (let i = 0; i < pages.length; i++) {
+      if (pages[i]["id"] == selectedDayBar) {
+        console.log(pages[i]);
+
+        if (i !== 0) {
+          setSelectedDayBar(pages[i - 1]["id"]);
+          setPagePtr(pages[i - 1]["id"]);
+        }
+
+        setPages(pages.filter((page) => page["id"] != selectedDayBar));
+        window.localStorage.setItem('pages', JSON.stringify(pages.filter((page) => page["id"] != selectedDayBar)));
+
+        return;
+      }
+    }
   };
 
   const resetFilters = () => {
@@ -182,60 +223,54 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
   };
 
   const traverseTree_SearchText = (searchText, node) => {
-    const lowercaseValue = node.value.toLowerCase();
-    const lowercaseNodeDetails = node.details.toLowerCase();
+    searchText = searchText.toLowerCase();
+    const lowercaseValue = node["value"].toLowerCase();
+    const lowercaseNodeDetails = node["details"].toLowerCase();
     if (
       lowercaseValue.includes(searchText) ||
       lowercaseNodeDetails.includes(searchText)
     ) {
-      console.log("FOUND!", node);
       return true;
     }
 
-    for (let i = 0; i < node.children.length; i++) {
-      if (traverseTree_SearchText(searchText, node.children[i])) {
+    for (let i = 0; i < node["children"].length; i++) {
+      if (traverseTree_SearchText(searchText, node["children"][i])) {
         return true;
       }
     }
-
-    /* OLD METHOD
-    if (Array.isArray(node.children)) {
-      return node.children.some((child) =>
-        traverseTree_SearchText(searchText, child)
-    );
-    */
 
     return false;
   };
 
   const traverseTree_Filters = (filters, node) => {
-    console.log(node, node.mood);
+    console.log(node, node["mood"]);
     for (let i = 0; i < filters.length; i++) {
       const currFilter = filters[i];
-      if (node.tags.includes(currFilter) || node.mood.includes(currFilter)) {
-        return true;
+      //console.log('->', node, node["tags"], currFilter, node["tags"].includes(currFilter))
+      for(let i = 0; i < node["tags"].length; i++){
+        if(node["tags"][i][0] == currFilter[0] && node["tags"][i][1] == currFilter[1]){
+          return true;
+        }
+      }
+      
+      for(let i = 0; i < node["mood"].length; i++){
+        if(node["mood"].includes(currFilter)){
+          return true;
+        }
       }
     }
 
-    for (let i = 0; i < node.children.length; i++) {
-      if (traverseTree_Filters(filters, node.children[i])) {
+    for (let i = 0; i < node["children"].length; i++) {
+      if (traverseTree_Filters(filters, node["children"][i])) {
         return true;
       }
     }
-
-    /* OLD METHOD
-    if (Array.isArray(node.children)) {
-      return node.children.some((child) =>
-        traverseTree_Filters(filters, child)
-      );
-    }
-    */
 
     return false;
   };
 
   const searchForDays = (e) => {
-    //! Add checking searchText in page.title and page.details [DONE]
+    //! Add checking searchText in page.title and page["details"] [DONE]
     // if no, check if search string is non empty
     // if yes, search for all days where any node contains the search string
 
@@ -251,11 +286,11 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
       for (let i = 0; i < pages.length; i++) {
         // check for searchText in Title (when I add it) [DONE]
         // check for searchText in nodes [DONE]
-        const currTree = pages[i].node;
+        const currTree = pages[i]["node"];
         if (
           traverseTree_SearchText(searchText.toLowerCase(), currTree) ||
-          pages[i].title.toLowerCase().includes(searchText.toLowerCase()) ||
-          pages[i].details.toLowerCase().includes(searchText.toLowerCase())
+          pages[i]["title"].toLowerCase().includes(searchText.toLowerCase()) ||
+          pages[i]["details"].toLowerCase().includes(searchText.toLowerCase())
         ) {
           filteredDays.push(pages[i]);
         }
@@ -268,12 +303,12 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
       for (let i = 0; i < pages.length; i++) {
         // check for searchText in Title (when I add it) [DONE]
         // check for searchText in nodes [DONE]
-        const currTree = pages[i].node;
+        const currTree = pages[i]["node"];
         if (
           traverseTree_Filters(selectedFilters, currTree) === true &&
           (traverseTree_SearchText(searchText.toLowerCase(), currTree) ||
-            pages[i].title.toLowerCase().includes(searchText.toLowerCase()) ||
-            pages[i].details.toLowerCase().includes(searchText.toLowerCase()))
+            pages[i]["title"].toLowerCase().includes(searchText.toLowerCase()) ||
+            pages[i]["details"].toLowerCase().includes(searchText.toLowerCase()))
         ) {
           filteredDays.push(pages[i]);
         }
@@ -284,7 +319,7 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
     } else if (searchText === "" && selectFilter.length > 0) {
       // no search + filters
       for (let i = 0; i < pages.length; i++) {
-        const currTree = pages[i].node;
+        const currTree = pages[i]["node"];
         if (traverseTree_Filters(selectedFilters, currTree)) {
           filteredDays.push(pages[i]);
         }
@@ -312,8 +347,8 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
     const formattedToday = convertDateFormat(date);
 
     for (let i = 0; i < pages.length; i++) {
-      if (pages[i].date == formattedToday) {
-        console.log("Date Already Stored", pages[i].date);
+      if (pages[i]["date"] == formattedToday) {
+        console.log("Date Already Stored", pages[i]["date"]);
         setSelectedDayBar(i); // set current page to selected calendar date
         return;
       }
@@ -330,7 +365,7 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
     const monthsFiltered = [];
 
     for (let i = 0; i < pages.length; i++) {
-      if (pages[i].date.includes(dateToCheck)) {
+      if (pages[i]["date"].includes(dateToCheck)) {
         monthsFiltered.push(pages[i]);
       }
     }
@@ -378,18 +413,21 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
   };
 
   const renderFilters = () => {
+    if (pages.length == 0) {
+      return null;
+    }
     if (showFilteredArray && showFilteredMonths) {
       return reverseArray(
         getArrayIntersection(filteredArray, filteredMonths)
       ).map((page) => (
         <div
-          key={page.id}
+          key={page["id"]}
           onClick={() => {
-            setSelectedDayBar(page.id);
-            setPagePtr(page.id);
+            setSelectedDayBar(page["id"]);
+            setPagePtr(page["id"]);
           }}
         >
-          <DayBar page={page} highlighted={page.id === selectedDayBar} />
+          <DayBar page={page} highlighted={page["id"] === selectedDayBar} />
         </div>
       ));
     } else {
@@ -397,13 +435,13 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
         let reversedArr = reverseArray(filteredArray);
         return reversedArr.map((page) => (
           <div
-            key={page.id}
+            key={page["id"]}
             onClick={() => {
-              setSelectedDayBar(page.id);
-              setPagePtr(page.id);
+              setSelectedDayBar(page["id"]);
+              setPagePtr(page["id"]);
             }}
           >
-            <DayBar page={page} highlighted={page.id === selectedDayBar} />
+            <DayBar page={page} highlighted={page["id"] === selectedDayBar} />
           </div>
         ));
       }
@@ -412,26 +450,26 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
         let reversedArr = reverseArray(filteredMonths);
         return reversedArr.map((page) => (
           <div
-            key={page.id}
+            key={page["id"]}
             onClick={() => {
-              setSelectedDayBar(page.id);
-              setPagePtr(page.id);
+              setSelectedDayBar(page["id"]);
+              setPagePtr(page["id"]);
             }}
           >
-            <DayBar page={page} highlighted={page.id === selectedDayBar} />
+            <DayBar page={page} highlighted={page["id"] === selectedDayBar} />
           </div>
         ));
       } else {
         let reversedArr = reverseArray(pages);
         return reversedArr.map((page) => (
           <div
-            key={page.id}
+            key={page["id"]}
             onClick={() => {
-              setSelectedDayBar(page.id);
-              setPagePtr(page.id);
+              setSelectedDayBar(page["id"]);
+              setPagePtr(page["id"]);
             }}
           >
-            <DayBar page={page} highlighted={page.id === selectedDayBar} />
+            <DayBar page={page} highlighted={page["id"] === selectedDayBar} />
           </div>
         ));
       }
@@ -439,6 +477,10 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
   };
 
   const renderChainView = () => {
+    if (pages.length == 0) {
+      return null;
+    }
+
     if (showFilteredArray && showFilteredMonths) {
       return reverseArray(
         getArrayIntersection(filteredArray, filteredMonths)
@@ -462,8 +504,17 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
     }
   };
 
+  //console.log(selectedDayBar, pages);
+  //console.log('-->', pages[selectedDayBar]);
+
+  //console.log(pagePtr, pages.find(page => page.id === pagePtr));
+
   const renderRightSide = () => {
     //? this is rendering text view and tree view
+    if (pages.length == 0) {
+      return null;
+    }
+
     if (treeView) {
       // maybe turn this jsx into a component
       return (
@@ -485,7 +536,7 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
           </div>
           <div class="w-full h-[40px] flex items-center justify-center">
             <h1 class="font-semibold text-[#746C59] underline text-xl">
-              {chainView === false ? pages[selectedDayBar].date : null}
+              {pages.find(page => page.id === pagePtr) != undefined ? chainView === false ? pages.find(page => page.id === pagePtr)["date"] : null : null}
             </h1>
           </div>
           {chainView === true ? (
@@ -500,7 +551,7 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
                 lineColor="#b794ec"
                 lineBorderRadius="10px"
               >
-                {showTree(pages[selectedDayBar].node)}
+                {pages.find(page => page.id === pagePtr) != undefined ? showTree(pages.find(page => page.id === pagePtr)["node"]) : null}
               </Tree>
             </div>
           ) : null}
@@ -510,7 +561,7 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
       return (
         <div className="flex mt-[10%] ml-[5%]">
           <TextView
-            page={pages[selectedDayBar]}
+            page={pages.find(page => page.id === pagePtr)}
             selectedDayBar={selectedDayBar}
           />
         </div>
@@ -666,6 +717,15 @@ const MainPage = ({ pages, setPagePtr, showTree, setPages, tags, moods }) => {
                   className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]"
                 >
                   <IoIosPaper />
+                </p>
+              </Tooltip>
+
+              <Tooltip label="Delete Entry" bg="#746C59" textColor="#eecabf">
+                <p
+                  onClick={() => deleteDay()}
+                  className="hover:cursor-pointer p-2 rounded-md bg-[#eecabf] text-[#746C59] border-2 border-[#746C59]"
+                >
+                  <MdDeleteForever />
                 </p>
               </Tooltip>
             </div>

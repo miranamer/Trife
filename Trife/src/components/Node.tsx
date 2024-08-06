@@ -51,16 +51,16 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
     const { isOpen: isOpenMood, onOpen: onOpenMood, onClose: onCloseMood } = useDisclosure() // Mood
     const { isOpen: isOpenManage, onOpen: onOpenManage, onClose: onCloseManage } = useDisclosure() // Details Page
     
-    const [choice, setChoice] = useState<number>(0)
+    const [choice, setChoice] = useState<number>(0);
     const [nodeText, setNodeText] = useState<string>("");
     const [tagMaker, setTagMaker] = useState<boolean>(false);
     const [tagColor, setTagColor] = useState<string>("");
     const [tagText, setTagText] = useState<string>("");
     const [selectedTags, setSelectedTags] = useState<string[][]>([]);
-    const [mood, setMood] = useState<string>(node.mood);
+    const [mood, setMood] = useState<string>(node["mood"]);
     const [openFileUploader, setOpenFileUploader] = useState<boolean>(false);
-    const [detailsText, setDetailsText] = useState<string>(node.details);
-    const [detailsTextForm, setDetailsTextForm] = useState<boolean>(node.details === "" ? false : true);
+    const [detailsText, setDetailsText] = useState<string>(node["details"]);
+    const [detailsTextForm, setDetailsTextForm] = useState<boolean>(node["details"] === "" ? false : true);
     
 
     const fileTypes = ["JPG", "PNG", "GIF"];
@@ -76,11 +76,11 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
             thumbnail: URL.createObjectURL(file),
         };
 
-        node.media.push(mediaItem);
+        node["media"].push(mediaItem);
         setPages([...pages]);
     };
 
-    const handleSelectChange = (e) => setChoice(parseInt(e.target.value));
+    const handleSelectChange = (e) => setChoice(parseInt(e.target.value)); // I THINK it's to change node type option
 
     const choiceToStyleMap = ["StyledNodeChoice", "StyledNodeResultGood", "StyledNodeResultMedium", "StyledNodeResultBad"]
     const choiceToMoodMap = ["moodChoice", "moodGood", "moodMedium", "moodBad"]
@@ -108,20 +108,22 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
             ],
         };
 
-        node.children.push(nodeToAdd);
+        node["children"].push(nodeToAdd);
         setPages([...pages]);
+        window.localStorage.setItem('pages', JSON.stringify([...pages]));
     }
 
     const deleteNodeNew = (rootNode: node) => {
         console.log(pages[pagePtr])
-        for(let i = 0; i < rootNode.children.length; i++){
-            if(rootNode.children[i] == node){
-                rootNode.children = rootNode.children.filter((child) => child !== node);
+        for(let i = 0; i < rootNode["children"].length; i++){
+            if(rootNode["children"][i] == node){
+                rootNode["children"] = rootNode["children"].filter((child) => child !== node);
                 setPages([ ...pages ]);
+                window.localStorage.setItem('pages', JSON.stringify([...pages]));
                 return;
             }
             else{
-                deleteNodeNew(rootNode.children[i]);
+                deleteNodeNew(rootNode["children"][i]);
             }
         }
     }
@@ -130,10 +132,10 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
         //^ right click on emoji mood bar
         event.preventDefault(); // Prevent the default context menu from appearing
         event.stopPropagation();
-        setMood(node.mood);
+        setMood(node["mood"]);
         onOpenMood();
         //^ Put emoji mood bar logic here -> open chakra ui modal to enter emoji
-        //node.moods = [...node.moods, "🎃"];
+        //node["mood"]s = [...node["mood"]s, "🎃"];
         //setPages([...pages])
     }
 
@@ -166,7 +168,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
     }
 
     const handleMoodChange = () => {
-        node.mood = mood;
+        node["mood"] = mood;
     
         if (mood === "🪄🪄🪄") {
             alert("You're a wizard Harry");
@@ -181,22 +183,24 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
     
         setMoods(uniqueMoodsArray);
         setPages([...pages]);
+        window.localStorage.setItem('pages', JSON.stringify([...pages]));
     };
 
     const handleDetailTextChange = () => {
-        node.details = detailsText;
+        node["details"] = detailsText;
         setDetailsTextForm(true);
         setPages([ ...pages ]);
+        window.localStorage.setItem('pages', JSON.stringify([...pages]));
     }
 
     const openDetailTextBox = () => {
-        setDetailsText(node.details);
+        setDetailsText(node["details"]);
         setDetailsTextForm(false);
     }
 
     const openDetailsPage = () => {
         onOpenManage();
-        node.details === "" ? setDetailsTextForm(false) : setDetailsTextForm(true);
+        node["details"] === "" ? setDetailsTextForm(false) : setDetailsTextForm(true);
     }
     
     const closeDetailsPage = () => {
@@ -210,35 +214,35 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
     return (
         <>
             <TreeNode
-            label={node.value !== "" ?
+            label={node["value"] !== "" ?
                 <div
-                className={`mt-[10px] ${node.nodeStyle} hover:cursor-pointer`}
+                className={`mt-[10px] ${node["nodeStyle"]} hover:cursor-pointer`}
                 onContextMenu={handleManageNodeMenu}
                 onClick={openDetailsPage}
                 >
                 <div className="flex flex-col items-center justify-center w-full h-full">
-                    {node.tags.length > 0 ? 
+                    {node["tags"].length > 0 ? 
                     <Tag
                     size='sm'
                     borderRadius='full'
                     variant='solid'
-                    colorScheme={node.tags[0][1]}
+                    colorScheme={node["tags"][0][1]}
                     className='absolute top-[-10px]'
                     >
-                    <TagLabel>{node.tags.length > 1 ? `${node.tags[0][0]} + ${node.tags.length - 1}...` : node.tags[0][0]}</TagLabel>
+                    <TagLabel>{node["tags"].length > 1 ? `${node["tags"][0][0]} + ${node["tags"].length - 1}...` : node["tags"][0][0]}</TagLabel>
                 </Tag> : null}
-                    {node.value}
+                    {node["value"]}
                 </div>
                     <div
                         onContextMenu={handleMoodMenu}
-                        className={`somelement z-10 hover:cursor-pointer w-max p-3 h-[5%] ${node.moodStyle} rounded-2xl border-2 flex items-center justify-center gap-3 text-lg`}
+                        className={`somelement z-10 hover:cursor-pointer w-max p-3 h-[5%] ${node["moodStyle"]} rounded-2xl border-2 flex items-center justify-center gap-3 text-lg`}
                     >
-                        <p>{node.mood}</p>
+                        <p>{node["mood"]}</p>
                     </div>
                 </div>
             : null}
             >
-            {node.children.map((child) => showTree(child))}
+            {node["children"].map((child) => showTree(child))}
             </TreeNode>
 
             <Modal isOpen={isOpen} onClose={closeModal}>
@@ -253,7 +257,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
                         <option value={2}>Add Good Result</option>
                         <option value={3}>Add Mid Result</option>
                         <option value={4}>Add Bad Result</option>
-                        {node.isRoot !== true ? <option value={5}>Delete Node</option> : null}
+                        {node["isRoot"] !== true ? <option value={5}>Delete Node</option> : null}
                     </Select>
                     {choice < 5 ? <div className='flex flex-col gap-5'><Input onChange={(e) => setNodeText(e.target.value)} placeholder='Node Text' />
                     <div className="flex bg-gray-700 p-5 rounded-md gap-2 flex-wrap">
@@ -330,9 +334,9 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
                     <ModalCloseButton />
                     <ModalBody>
                         <div className="flex flex-col gap-5">
-                            {detailsTextForm === false ? <Textarea value={detailsText} onChange={(e) => setDetailsText(e.target.value)} placeholder='Enter Event Details' /> : <div className='mb-10 flex flex-wrap relative'><h1 className='font-semibold text-gray-700'>{node.details}</h1><p onClick={() => openDetailTextBox()} className='absolute top-0 right-0 text-blue-400 text-2xl hover:cursor-pointer hover:text-blue-700'><FaPencilAlt /></p></div>}
+                            {detailsTextForm === false ? <Textarea value={detailsText} onChange={(e) => setDetailsText(e.target.value)} placeholder='Enter Event Details' /> : <div className='mb-10 flex flex-wrap relative'><h1 className='font-semibold text-gray-700'>{node["details"]}</h1><p onClick={() => openDetailTextBox()} className='absolute top-0 right-0 text-blue-400 text-2xl hover:cursor-pointer hover:text-blue-700'><FaPencilAlt /></p></div>}
                             <div className="flex w-full flex-wrap gap-2">
-                            {node.tags.map((tag) => (
+                            {node["tags"].map((tag) => (
                                     <Tag
                                     size='lg'
                                     borderRadius='full'
@@ -345,7 +349,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
                             </div>
                             {detailsTextForm === false ? <Button onClick={() => handleDetailTextChange()} colorScheme='green' variant="outline">Update Details</Button> : null}
                             <div className="flex items-center justify-center">
-                                <ImageGallery items={node.media} />;
+                                <ImageGallery items={node["media"]} />;
                             </div>
                             {openFileUploader ? <FileUploader handleChange={handleFileUpload} name="file" types={fileTypes} /> : null}
                             <Button onClick={() => setOpenFileUploader(!openFileUploader)} colorScheme='yellow'>Add Media</Button>
