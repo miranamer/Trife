@@ -334,7 +334,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
                     <ModalCloseButton />
                     <ModalBody>
                         <div className="flex flex-col gap-5">
-                            {detailsTextForm === false ? <Textarea value={detailsText} onChange={(e) => setDetailsText(e.target.value)} placeholder='Enter Event Details' /> : <div className='mb-10 flex flex-wrap relative'><h1 className='font-semibold text-gray-700'>{node["details"]}</h1><p onClick={() => openDetailTextBox()} className='absolute top-0 right-0 text-blue-400 text-2xl hover:cursor-pointer hover:text-blue-700'><FaPencilAlt /></p></div>}
+                            {detailsTextForm === false ? <Textarea value={detailsText} onChange={(e) => setDetailsText(e.target.value)} placeholder='Enter Event Details' /> : <div className='mb-10 flex flex-wrap relative w-[95%]'><h1 className='font-semibold text-gray-700'>{node["details"]}</h1><p onClick={() => openDetailTextBox()} className='absolute top-0 right-[-20px] text-blue-400 text-2xl hover:cursor-pointer hover:text-blue-700'><FaPencilAlt /></p></div>}
                             <div className="flex w-full flex-wrap gap-2">
                             {node["tags"].map((tag) => (
                                     <Tag

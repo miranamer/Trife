@@ -71,16 +71,16 @@ function App() {
     id: 1,
     date: "02/01/2024",
     node: structuredClone(startNode),
-    title: "Jane Street",
-    details: "Went great, had a lot of fun!"
+    title: "Marshall Wace - Insight Day",
+    details: "Trading, AI, System Design"
   }
 
   const testPage2: page = {
     id: 0,
     date: "01/01/2024",
     node: structuredClone(startNode),
-    title: "Amazon Internship Day 1",
-    details: "Really fun, learnt a lot"
+    title: "Jane Street Event",
+    details: "Black-Scholes, Options Trading, HFT"
   }
 
   //! ADD TAGS AND MOODS TO LOCALSTORAGE TO PERSIST THEM

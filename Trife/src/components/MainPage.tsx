@@ -42,6 +42,10 @@ import TextView from "./TextView";
 import { node, page, startNode } from "../App.tsx";
 import ChainViewTree from "./ChainViewTree.tsx";
 
+import newDayAddedSoundEffect from '../assets/dayAddedSoundEffect.mp3';
+import dayBarClickedSoundEffect from '../assets/dayBarClickedSoundEffect.mp3';
+import deleteDaySoundEffect from '../assets/deleteDaySoundEffect.mp3';
+
 type ValuePiece = Date | null;
 
 type Value = ValuePiece | [ValuePiece, ValuePiece];
@@ -111,7 +115,12 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
 
   const toast = useToast();
 
-  const TestDate = "03/01/2024"; //! replace w/ curr date
+  const today = new Date();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const yyyy = today.getFullYear();
+
+  const TestDate = `${mm}/${dd}/${yyyy}`; //! replace w/ curr date
 
   const monthMap = {
     "01": "Jan",
@@ -161,6 +170,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
       isClosable: true,
     });
 
+    new Audio(newDayAddedSoundEffect).play();
     setPageDetails("");
     setPageTitle("");
     setPages([...pages, newDay]);
@@ -172,6 +182,8 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
   };
 
   const deleteDay = () => {
+    new Audio(deleteDaySoundEffect).play();
+    
     for (let i = 0; i < pages.length; i++) {
       if (pages[i]["id"] == selectedDayBar) {
         console.log(pages[i]);
@@ -356,6 +368,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
 
     setDateToAdd(formattedToday);
     onOpen();
+    setCalendarOpen(false);
   };
 
   const filterByMonth = (date) => {
@@ -412,6 +425,10 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
     return newArr;
   };
 
+  const playDayBarAudio = () => {
+    new Audio(dayBarClickedSoundEffect).play();
+  }
+
   const renderFilters = () => {
     if (pages.length == 0) {
       return null;
@@ -423,6 +440,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
         <div
           key={page["id"]}
           onClick={() => {
+            playDayBarAudio();
             setSelectedDayBar(page["id"]);
             setPagePtr(page["id"]);
           }}
@@ -437,6 +455,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
           <div
             key={page["id"]}
             onClick={() => {
+              playDayBarAudio();
               setSelectedDayBar(page["id"]);
               setPagePtr(page["id"]);
             }}
@@ -452,6 +471,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
           <div
             key={page["id"]}
             onClick={() => {
+              playDayBarAudio();
               setSelectedDayBar(page["id"]);
               setPagePtr(page["id"]);
             }}
@@ -465,6 +485,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
           <div
             key={page["id"]}
             onClick={() => {
+              playDayBarAudio();
               setSelectedDayBar(page["id"]);
               setPagePtr(page["id"]);
             }}
