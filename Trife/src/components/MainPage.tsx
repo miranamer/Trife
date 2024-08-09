@@ -120,7 +120,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
   const dd = String(today.getDate()).padStart(2, '0');
   const yyyy = today.getFullYear();
 
-  const TestDate = `${mm}/${dd}/${yyyy}`; //! replace w/ curr date
+  const TestDate = `${dd}/${mm}/${yyyy}`; //! replace w/ curr date
 
   const monthMap = {
     "01": "Jan",

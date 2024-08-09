@@ -47,6 +47,8 @@ function App() {
 
   useEffect(() => {
       const storedPages = window.localStorage.getItem('pages');
+      const storedMoods = window.localStorage.getItem('moods');
+      const storedTags = window.localStorage.getItem('tags');
 
       if (storedPages) {
         setPages(JSON.parse(storedPages));
@@ -65,6 +67,23 @@ function App() {
         window.localStorage.setItem('pages', JSON.stringify([]));
         setPagePtr(0);
       }
+
+      if(storedMoods){
+        setMoods(JSON.parse(storedMoods));
+      }
+      else{
+        window.localStorage.setItem('moods', JSON.stringify([]));
+      }
+
+      if(storedTags){
+        setTags(JSON.parse(storedTags));
+      }
+      else{
+        window.localStorage.setItem('tags', JSON.stringify([]));
+      }
+
+
+
   }, [])
   
   const testPage: page = {
@@ -87,7 +106,7 @@ function App() {
 
   const [pages, setPages] = useState<page[]>([]); // Array of all pages (entries)
   const [pagePtr, setPagePtr] = useState<number>(0); // ID of currently selected page
-  const [tags, setTags] = useState<string[][]>([['Internships', 'red'], ['Uni', 'blue']]) // Tags Array -> [tagTitle, tagColor]
+  const [tags, setTags] = useState<string[][]>([]) // Tags Array -> [tagTitle, tagColor]
   const [moods, setMoods] = useState<string[]>([]); // All Used Moods
 
   const showTree = (node: node) => { // Recursively draws all nodes by taking in root node as Node itself calls showTree on all children

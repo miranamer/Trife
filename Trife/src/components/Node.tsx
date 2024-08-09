@@ -147,6 +147,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
 
     const addNewTag = () => {
         setTags([...tags, [tagText, tagColor]])
+        window.localStorage.setItem('tags', JSON.stringify([...tags, [tagText, tagColor]]));
     }
 
     const selectTag = (tag) => {
@@ -182,6 +183,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
         const uniqueMoodsArray = Array.from(uniqueMoodsSet).filter(char => char !== "");
     
         setMoods(uniqueMoodsArray);
+        window.localStorage.setItem('moods', JSON.stringify(uniqueMoodsArray));
         setPages([...pages]);
         window.localStorage.setItem('pages', JSON.stringify([...pages]));
     };
