@@ -67,15 +67,9 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 //* - Show All The Selected Tags for the Node [DONE]
 //* Chain trees to show all trees in one go [DONE]
 
-const MainPage = ({
-  pages,
-  pagePtr,
-  setPagePtr,
-  showTree,
-  setPages,
-  tags,
-  moods,
-}) => {
+type MainPageProps = {pages: page[], pagePtr: number, setPagePtr: React.Dispatch<React.SetStateAction<number>>, showTree: JSX.Element, setPages: React.Dispatch<React.SetStateAction<page[]>>, tags: string[][], moods: string[]}
+
+const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} : MainPageProps) => {
   useEffect(() => {
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -86,24 +80,25 @@ const MainPage = ({
     });
   }, []);
 
-  const [selectedDayBar, setSelectedDayBar] = useState<number>(0);
+  //! Main Page Local State
+
+  const [selectedDayBar, setSelectedDayBar] = useState<number>(0); // Stores ID of currently selected page (same as pagePtr therefore redunant)
   const [selectedFilter, setSelectedFilter] = useState<string>(""); // "tag", "mood", etc -> determines what filter menu to open
   const [selectedFilters, setSelectedFilters] = useState([]); // STORES ALL FILTERS (TAGS, MOODS, ETC)
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [searchText, setSearchText] = useState<string>("");
-  const [filteredArray, setFilteredArray] = useState([]); // if searchText != "" and or filters filters present
+  const [filteredArray, setFilteredArray] = useState([]); // if searchText != "" and or filters present
   const [showFilteredArray, setShowFilteredArray] = useState<boolean>(false);
   const [pageTitle, setPageTitle] = useState<string>("");
   const [pageDetails, setPageDetails] = useState<string>("");
   const [calendarDate, setCalendarDate] = useState<Value>(new Date());
   const [calendarOpen, setCalendarOpen] = useState<boolean>(false);
-  const [dateToAdd, setDateToAdd] = useState<string>(null);
+  const [dateToAdd, setDateToAdd] = useState<string | null>(null);
   const [treeView, setTreeView] = useState<boolean>(true);
   const [filteredMonths, setFilteredMonths] = useState([]);
   const [showFilteredMonths, setShowFilteredMonths] = useState(false);
   const [chainView, setChainView] = useState(false);
   const [currFilteredMonth, setCurrFilteredMonth] = useState("");
-
   const [session, setSession] = useState<Session | null>();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -116,11 +111,11 @@ const MainPage = ({
   const toast = useToast();
 
   const today = new Date();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const mm = String(today.getMonth() + 1).padStart(2, "0"); // padStart adds 0 padding from the start of string to ensure len is 2
   const dd = String(today.getDate()).padStart(2, "0");
   const yyyy = today.getFullYear();
 
-  const TestDate = `${dd}/${mm}/${yyyy}`; //! replace w/ curr date
+  const currentDate = `${dd}/${mm}/${yyyy}`; // e.g. 02/01/2024
 
   const monthMap = {
     "01": "Jan",
@@ -137,11 +132,14 @@ const MainPage = ({
     "12": "Dec",
   };
 
-  const addNewDay = async (dateToAdd = null) => {
+  //! Main Page Functions Below:
+
+  //^ adds a new day (page) to pages table and pages local state
+  const addNewDay = async (dateToAdd: string | null = null) => {
     for (let i = 0; i < pages.length; i++) {
       // checking if entry on the curr day already exists
       if (dateToAdd === null) {
-        if (pages[i]["date"] === TestDate) {
+        if (pages[i]["date"] === currentDate) {
           // clicking the ADD button to add entry for current date
           alert("Already Have An Entry Today!");
           return;
@@ -155,7 +153,7 @@ const MainPage = ({
 
     const newDay: page = {
       userID: session?.user.id,
-      date: dateToAdd === null ? TestDate : dateToAdd, // curr date if no dateToAdd param
+      date: dateToAdd === null ? currentDate : dateToAdd, // curr date if no dateToAdd param
       node: structuredClone(startNode),
       title: pageTitle,
       details: pageDetails,
@@ -181,7 +179,7 @@ const MainPage = ({
     toast({
       position: "top",
       title: pageTitle,
-      description: dateToAdd === null ? TestDate : dateToAdd,
+      description: dateToAdd === null ? currentDate : dateToAdd,
       status: "success",
       duration: 3000,
       isClosable: true,
@@ -200,7 +198,8 @@ const MainPage = ({
     onClose();
   };
 
-  const deleteDay = async (pageID: string) => {
+  //^ deletes the currently selected day (page) from pages table and from local state
+  const deleteDay = async (pageID: number) => {
     new Audio(deleteDaySoundEffect).play();
 
     const { data, error } = await supabaseClient
@@ -217,6 +216,7 @@ const MainPage = ({
     setPages(pages.filter((page) => page.id !== parseInt(pageID)));
   };
 
+  //^ resets all filters back
   const resetFilters = () => {
     setFilteredArray([]);
     setSearchText("");
@@ -226,7 +226,8 @@ const MainPage = ({
     removeMonthFilter();
   };
 
-  const addSelectedTag = (selectedTag) => {
+  //^ adds the clicked tag to the selected filters array to allow filtering of pages with that tag
+  const addSelectedTag = (selectedTag: string[]) => {
     if (selectedFilters.includes(selectedTag) == false) {
       setSelectedFilters([...selectedFilters, selectedTag]); // add to curr selected filters if not already in
     } else {
@@ -234,7 +235,8 @@ const MainPage = ({
     }
   };
 
-  const addSelectedMood = (selectedMood) => {
+  //^ adds the clicked mood to the selected filters array to allow filtering of pages by that mood
+  const addSelectedMood = (selectedMood: string) => {
     if (selectedFilters.includes(selectedMood) == false) {
       setSelectedFilters([...selectedFilters, selectedMood]);
     } else {
@@ -244,16 +246,20 @@ const MainPage = ({
     }
   };
 
+  //^ sets selectedFilter to either tag or mood based on what option was clicked. Then appropriate filter box is opened
   const selectFilter = (filter) => {
     //? Show all selected tags and moods somewhere - new div left of dropdown showing all selected filtered items
-    setMenuOpen(false);
+    setMenuOpen(false); // closes tag, mood option dropdown menu
     setSelectedFilter(filter);
   };
 
-  const traverseTree_SearchText = (searchText, node) => {
+  //^ recursively traverses nodes to find searchText parameter in trees
+  const traverseTree_SearchText = (searchText: string, node: node) => {
     searchText = searchText.toLowerCase();
+    
     const lowercaseValue = node["value"].toLowerCase();
     const lowercaseNodeDetails = node["details"].toLowerCase();
+    
     if (
       lowercaseValue.includes(searchText) ||
       lowercaseNodeDetails.includes(searchText)
@@ -270,12 +276,13 @@ const MainPage = ({
     return false;
   };
 
-  const traverseTree_Filters = (filters, node) => {
-    console.log(node, node["mood"]);
+  //^ recursively traverses nodes to find if they contain any of the selected filters (tags, moods)
+  const traverseTree_Filters = (filters: any[], node: node) => {
     for (let i = 0; i < filters.length; i++) {
+      
       const currFilter = filters[i];
-      //console.log('->', node, node["tags"], currFilter, node["tags"].includes(currFilter))
-      for (let i = 0; i < node["tags"].length; i++) {
+      
+      for (let i = 0; i < node["tags"].length; i++) { // Checking if any tags on current node == currFilter (which may be a tag or mood)
         if (
           node["tags"][i][0] == currFilter[0] &&
           node["tags"][i][1] == currFilter[1]
@@ -284,7 +291,7 @@ const MainPage = ({
         }
       }
 
-      for (let i = 0; i < node["mood"].length; i++) {
+      for (let i = 0; i < node["mood"].length; i++) { // Checking if node mood is equal to currFilter
         if (node["mood"].includes(currFilter)) {
           return true;
         }
@@ -300,23 +307,18 @@ const MainPage = ({
     return false;
   };
 
+  //^ called when clicking enter in the search bar -> sets filteredArray to array of filtered pages to show correct pages based on filters and or text
   const searchForDays = (e) => {
-    //! Add checking searchText in page.title and page["details"] [DONE]
-    // if no, check if search string is non empty
-    // if yes, search for all days where any node contains the search string
 
     e.preventDefault();
 
     const filteredDays = [];
 
-    if (searchText === "" && selectedFilters.length == 0) {
-      // No Filters + No Text = Reset Filters
+    if (searchText === "" && selectedFilters.length == 0) { //? No Filters + No Text = Reset Filters
       resetFilters();
-    } else if (searchText != "" && selectedFilters.length == 0) {
-      // search + no filters
+    } 
+    else if (searchText != "" && selectedFilters.length == 0) { //? Search Text + No Filters -> looking for text in tree, title + details
       for (let i = 0; i < pages.length; i++) {
-        // check for searchText in Title (when I add it) [DONE]
-        // check for searchText in nodes [DONE]
         const currTree = pages[i]["node"];
         if (
           traverseTree_SearchText(searchText.toLowerCase(), currTree) ||
@@ -326,15 +328,14 @@ const MainPage = ({
           filteredDays.push(pages[i]);
         }
       }
-      console.log(filteredDays);
-      setFilteredArray(filteredDays);
+      setFilteredArray(filteredDays); // Output array with all the pages that have the inputted search text
       setShowFilteredArray(true);
-    } else if (searchText != "" && selectedFilters.length > 0) {
-      // search with filters
+    } 
+    else if (searchText != "" && selectedFilters.length > 0) { //? Search Text + Filter(s)
       for (let i = 0; i < pages.length; i++) {
-        // check for searchText in Title (when I add it) [DONE]
-        // check for searchText in nodes [DONE]
+        
         const currTree = pages[i]["node"];
+        
         if (
           traverseTree_Filters(selectedFilters, currTree) === true &&
           (traverseTree_SearchText(searchText.toLowerCase(), currTree) ||
@@ -351,8 +352,8 @@ const MainPage = ({
 
       setFilteredArray(filteredDays);
       setShowFilteredArray(true);
-    } else if (searchText === "" && selectFilter.length > 0) {
-      // no search + filters
+    } 
+    else if (searchText === "" && selectFilter.length > 0) { //? No Search Text + Filters Present
       for (let i = 0; i < pages.length; i++) {
         const currTree = pages[i]["node"];
         if (traverseTree_Filters(selectedFilters, currTree)) {
@@ -365,36 +366,38 @@ const MainPage = ({
     }
   };
 
-  const convertDateFormat = (date) => {
+  //^ converts date object to correct format with zero padding
+  const convertDateFormat = (date: Date) => {
     const yyyy = date.getFullYear();
     let mm = date.getMonth() + 1; // Months start at 0!
     let dd = date.getDate();
 
-    if (dd < 10) dd = "0" + dd;
-    if (mm < 10) mm = "0" + mm;
+    if (dd < 10) dd = "0" + dd; // adding zero padding
+    if (mm < 10) mm = "0" + mm; // adding zero padding
 
     const formattedToday = dd + "/" + mm + "/" + yyyy;
 
     return formattedToday;
   };
 
-  const addPageWithCalendar = (date) => {
+  //^ called when clicking on a date from the calender. If no page w/ that date exists, modal to add it opens else that page is selected.
+  const addPageWithCalendar = (date: Date) => {
     const formattedToday = convertDateFormat(date);
 
     for (let i = 0; i < pages.length; i++) {
       if (pages[i]["date"] == formattedToday) {
-        console.log("Date Already Stored", pages[i]["date"]);
-        setSelectedDayBar(i); // set current page to selected calendar date
+        setSelectedDayBar(i); // set current page to selected calendar date as it already exists
         return;
       }
     }
 
     setDateToAdd(formattedToday);
-    onOpen();
-    setCalendarOpen(false);
+    onOpen(); // Open modal to add page title and details using calendar date
+    setCalendarOpen(false); // Close calendar
   };
 
-  const filterByMonth = (date) => {
+  //^ finds pages based on a month/year selected from calender (e.g. 10/2023 or 02/2020)
+  const filterByMonth = (date: Date) => {
     const formattedDate = convertDateFormat(date);
     const dateToCheck = formattedDate.substring(3, 10); // month and year we are looking for (e.g "02/2024")
 
@@ -411,12 +414,14 @@ const MainPage = ({
     setCurrFilteredMonth(dateToCheck);
   };
 
+  //^ closes modal that allows you to add a new page
   const closeDayModal = () => {
     setDateToAdd(null);
     onClose();
   };
 
-  function getArrayIntersection(arr1, arr2) {
+  //^ gets intersection of 2 arrays
+  function getArrayIntersection(arr1: any[], arr2: any[]) {
     // Convert arrays to sets to remove duplicates
     const set1 = new Set(arr1);
     const set2 = new Set(arr2);
@@ -432,33 +437,26 @@ const MainPage = ({
     return intersectionArray;
   }
 
+  //^ removes any selected month/year filter
   const removeMonthFilter = () => {
     setFilteredMonths([]);
     setShowFilteredMonths(false);
     setCurrFilteredMonth("");
   };
 
-  const reverseArray = (arr) => {
-    var newArr = [];
-
-    for (let i = arr.length - 1; i > -1; i--) {
-      newArr.push(arr[i]);
-    }
-
-    return newArr;
-  };
-
+  //^ play sound effect when clicking on a day bar (page)
   const playDayBarAudio = () => {
     new Audio(dayBarClickedSoundEffect).play();
   };
 
+  //^ renders the correct pages based on all filters
   const renderFilters = () => {
     if (pages.length == 0) {
       return null;
     }
     if (showFilteredArray && showFilteredMonths) {
-      return 
-        getArrayIntersection(filteredArray, filteredMonths).map((page) => (
+      return;
+      getArrayIntersection(filteredArray, filteredMonths).map((page) => (
         <div
           key={page["id"]}
           onClick={() => {
@@ -516,39 +514,35 @@ const MainPage = ({
     }
   };
 
+  //^ renders the chain view (all pages on one page - chained together)
   const renderChainView = () => {
     if (pages.length == 0) {
       return null;
     }
 
     if (showFilteredArray && showFilteredMonths) {
-      return reverseArray(
-        getArrayIntersection(filteredArray, filteredMonths)
-      ).map((page) => <ChainViewTree page={page} showTree={showTree} />);
+      return 
+        getArrayIntersection(filteredArray, filteredMonths).map((page) => <ChainViewTree page={page} showTree={showTree} />);
     } else {
       if (showFilteredArray) {
-        return reverseArray(filteredArray).map((page) => (
+        return filteredArray.map((page) => (
           <ChainViewTree page={page} showTree={showTree} />
         ));
       }
 
       if (showFilteredMonths) {
-        return reverseArray(filteredMonths).map((page) => (
+        return filteredMonths.map((page) => (
           <ChainViewTree page={page} showTree={showTree} />
         ));
       } else {
-        return reverseArray(pages).map((page) => (
+        return pages.map((page) => (
           <ChainViewTree page={page} showTree={showTree} />
         ));
       }
     }
   };
 
-  //console.log(selectedDayBar, pages);
-  //console.log('-->', pages[selectedDayBar]);
-
-  //console.log(pagePtr, pages.find(page => page.id === pagePtr));
-
+  //^ determines whether to show chain view or normal tree view on right side of page and renders it
   const renderRightSide = () => {
     //? this is rendering text view and tree view
     if (pages.length == 0) {
@@ -615,6 +609,7 @@ const MainPage = ({
     }
   };
 
+  //^ logs user out of their account and redirects back to login page
   const LogOut = async () => {
     const { error } = await supabaseClient.auth.signOut();
     if (error) throw error;
@@ -622,16 +617,16 @@ const MainPage = ({
 
   return (
     <>
-      <div class="bg-[#F1E8D7] w-full h-screen p-5 font-dmMono">
+      <div className="bg-[#F1E8D7] w-full h-screen p-5 font-dmMono">
         <p
           onClick={onOpenDrawer}
           className="text-3xl fixed top-1 left-5 text-[#746C59] hover:cursor-pointer"
         >
           <IoMenu />
         </p>
-        <div class="flex gap-3 w-full">
-          <div class="flex flex-col gap-3 w-[50%] h-[95vh] mt-4">
-            <div class="relative bg-[#FAF6EC] w-full h-[100px] border-[#746C59] border-[2px] flex items-center p-3 rounded-md font-bold">
+        <div className="flex gap-3 w-full">
+          <div className="flex flex-col gap-3 w-[50%] h-[95vh] mt-4">
+            <div className="relative bg-[#FAF6EC] w-full h-[100px] border-[#746C59] border-[2px] flex items-center p-3 rounded-md font-bold">
               <form className="w-full" onSubmit={(e) => searchForDays(e)}>
                 <input
                   value={searchText}
@@ -642,9 +637,9 @@ const MainPage = ({
               </form>
               <div
                 onClick={() => setMenuOpen(!menuOpen)}
-                class="rounded-md hover:cursor-pointer absolute right-0 flex items-center justify-center border-[#746C59] border-l-[2px] w-[100px] h-full bg-[#EFE2C0]"
+                className="rounded-md hover:cursor-pointer absolute right-0 flex items-center justify-center border-[#746C59] border-l-[2px] w-[100px] h-full bg-[#EFE2C0]"
               >
-                <p class="text-4xl text-[#746C59]">
+                <p className="text-4xl text-[#746C59]">
                   {menuOpen === false ? (
                     <IoIosArrowDropdown />
                   ) : (
@@ -655,23 +650,23 @@ const MainPage = ({
             </div>
 
             {menuOpen ? (
-              <div class="relative mb-[150px]">
-                <div class="rounded-md bg-[#FAF6EC] flex flex-col w-[100px] absolute right-0 border-[#746C59] border-[2px] justify-end">
+              <div className="relative mb-[150px]">
+                <div className="rounded-md bg-[#FAF6EC] flex flex-col w-[100px] absolute right-0 border-[#746C59] border-[2px] justify-end">
                   <h1
                     onClick={() => selectFilter("tag")}
-                    class="hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] border-b-2 border-b-[#746C59] p-2 hover:cursor-pointer"
+                    className="hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] border-b-2 border-b-[#746C59] p-2 hover:cursor-pointer"
                   >
                     Tag
                   </h1>
                   <h1
                     onClick={() => selectFilter("mood")}
-                    class="hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] border-b-2 border-b-[#746C59] p-2 hover:cursor-pointer"
+                    className="hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] border-b-2 border-b-[#746C59] p-2 hover:cursor-pointer"
                   >
                     Mood
                   </h1>
                   <h1
                     onClick={() => resetFilters()}
-                    class="hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] p-2 hover:cursor-pointer"
+                    className="hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] p-2 hover:cursor-pointer"
                   >
                     Reset Filters
                   </h1>
@@ -692,14 +687,14 @@ const MainPage = ({
               />
             ) : null}
 
-            <div class="relative rounded-md overflow-scroll no-scrollbar bg-[#FAF6EC] h-full border-[#746C59] border-[2px] flex flex-col gap-3 p-3 text-[#746C59]">
+            <div className="relative rounded-md overflow-scroll no-scrollbar bg-[#FAF6EC] h-full border-[#746C59] border-[2px] flex flex-col gap-3 p-3 text-[#746C59]">
               <div className="flex items-center justify-between">
                 <div
                   onClick={onOpen}
-                  class="hover:cursor-pointer rounded-full ml-6 w-[60px] border-2 border-[#746C59] h-[60px] bg-[#EEE1BF] flex items-center justify-center"
+                  className="hover:cursor-pointer rounded-full ml-6 w-[60px] border-2 border-[#746C59] h-[60px] bg-[#EEE1BF] flex items-center justify-center"
                 >
                   <Tooltip label="Add Day" bg="#746C59" textColor="#EEE1BF">
-                    <p class="text-3xl">
+                    <p className="text-3xl">
                       <FaPlus />
                     </p>
                   </Tooltip>
@@ -722,10 +717,10 @@ const MainPage = ({
                 ) : null}
                 <div
                   onClick={() => setCalendarOpen(!calendarOpen)}
-                  class="hover:cursor-pointer rounded-full mr-6 w-[60px] border-2 border-[#746C59] h-[60px] bg-[#EEE1BF] flex items-center justify-center"
+                  className="hover:cursor-pointer rounded-full mr-6 w-[60px] border-2 border-[#746C59] h-[60px] bg-[#EEE1BF] flex items-center justify-center"
                 >
                   <Tooltip label="Calendar" bg="#746C59" textColor="#EEE1BF">
-                    <p class="text-3xl">
+                    <p className="text-3xl">
                       <FaCalendarAlt />
                     </p>
                   </Tooltip>
@@ -748,7 +743,7 @@ const MainPage = ({
           </div>
 
           <div
-            class={`relative flex flex-col w-[50%] h-[95vh] mt-4 ${
+            className={`relative flex flex-col w-[50%] h-[95vh] mt-4 ${
               treeView === true ? "treeViewBG" : "bg-[#FAF6EC]"
             } rounded-md border-[#746C59] border-[2px] p-2 overflow-scroll no-scrollbar`}
           >
@@ -790,7 +785,7 @@ const MainPage = ({
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>
-            Add Day Info - {dateToAdd !== null ? dateToAdd : TestDate}
+            Add Day Info - {dateToAdd !== null ? dateToAdd : currentDate}
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody>

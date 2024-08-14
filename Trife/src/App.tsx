@@ -54,9 +54,6 @@ export const startNode: node = {
 function App() {
 
   useEffect(() => { //! STORE AND FETCH MOODS AND TAGS AND MAKE MOODS AND TAGS WORK W/ SUPABASE
-      const storedPages = window.localStorage.getItem('pages');
-      const storedMoods = window.localStorage.getItem('moods');
-      const storedTags = window.localStorage.getItem('tags');
 
       const fetchPages = async (userID) => {
         const {data, error} = await supabaseClient
