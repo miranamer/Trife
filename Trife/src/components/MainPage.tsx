@@ -3,7 +3,7 @@ import { Tree } from "react-organizational-chart";
 import DayBar from "./DayBar";
 import { Tag, TagLabel, TagCloseButton, Textarea } from "@chakra-ui/react";
 import { IoIosArrowDropdown, IoIosArrowDropup, IoMdHelp } from "react-icons/io";
-import { IoMenu, IoSettingsSharp, IoHome } from "react-icons/io5";
+import { IoMenu, IoSettingsSharp, IoHome, IoLogOut } from "react-icons/io5";
 import {
   FaPlus,
   FaCalendarAlt,
@@ -42,9 +42,12 @@ import TextView from "./TextView";
 import { node, page, startNode } from "../App.tsx";
 import ChainViewTree from "./ChainViewTree.tsx";
 
-import newDayAddedSoundEffect from '../assets/dayAddedSoundEffect.mp3';
-import dayBarClickedSoundEffect from '../assets/dayBarClickedSoundEffect.mp3';
-import deleteDaySoundEffect from '../assets/deleteDaySoundEffect.mp3';
+import newDayAddedSoundEffect from "../assets/dayAddedSoundEffect.mp3";
+import dayBarClickedSoundEffect from "../assets/dayBarClickedSoundEffect.mp3";
+import deleteDaySoundEffect from "../assets/deleteDaySoundEffect.mp3";
+
+import { supabaseClient } from "../config/supabase-client";
+import { Session } from "@supabase/supabase-js";
 
 type ValuePiece = Date | null;
 
@@ -64,29 +67,24 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 //* - Show All The Selected Tags for the Node [DONE]
 //* Chain trees to show all trees in one go [DONE]
 
-const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods }) => {
-
-
+const MainPage = ({
+  pages,
+  pagePtr,
+  setPagePtr,
+  showTree,
+  setPages,
+  tags,
+  moods,
+}) => {
   useEffect(() => {
-    const storedPages = JSON.parse(window.localStorage.getItem('pages'));
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
 
-    if(storedPages){
-      let mxID = 0;
-        
-      for(let i = 0; i < storedPages.length; i++){
-        if(storedPages[i]["id"] > mxID){
-          mxID = storedPages[i]["id"];
-        }
-      }
-
-      setSelectedDayBar(mxID);
-    }
-    else{
-      setSelectedDayBar(0);
-    }
-  }, [])
-
-
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+  }, []);
 
   const [selectedDayBar, setSelectedDayBar] = useState<number>(0);
   const [selectedFilter, setSelectedFilter] = useState<string>(""); // "tag", "mood", etc -> determines what filter menu to open
@@ -106,6 +104,8 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
   const [chainView, setChainView] = useState(false);
   const [currFilteredMonth, setCurrFilteredMonth] = useState("");
 
+  const [session, setSession] = useState<Session | null>();
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isOpenDrawer,
@@ -116,8 +116,8 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
   const toast = useToast();
 
   const today = new Date();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
   const yyyy = today.getFullYear();
 
   const TestDate = `${dd}/${mm}/${yyyy}`; //! replace w/ curr date
@@ -137,7 +137,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
     "12": "Dec",
   };
 
-  const addNewDay = (dateToAdd = null) => {
+  const addNewDay = async (dateToAdd = null) => {
     for (let i = 0; i < pages.length; i++) {
       // checking if entry on the curr day already exists
       if (dateToAdd === null) {
@@ -154,12 +154,29 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
     }
 
     const newDay: page = {
-      id: pages.length,
+      userID: session?.user.id,
       date: dateToAdd === null ? TestDate : dateToAdd, // curr date if no dateToAdd param
       node: structuredClone(startNode),
       title: pageTitle,
       details: pageDetails,
     };
+
+    let newPageID = null;
+
+    const { data, error } = await supabaseClient
+      .from("Pages") // Specify the table name
+      .insert([newDay])
+      .select(); // This retrieves the inserted record(s) with their IDs
+
+    if (error) {
+      console.error("Error inserting page:", error);
+      return null;
+    } else {
+      const insertedPage = data[0]; // Assuming you inserted a single record
+      newPageID = insertedPage.id; // This is the ID of the newly inserted page
+      setSelectedDayBar(newPageID); //* Sets selected day bar (entry) to newly added one
+      setPagePtr(newPageID);
+    }
 
     toast({
       position: "top",
@@ -170,35 +187,34 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
       isClosable: true,
     });
 
+    newDay.id = newPageID;
+
     new Audio(newDayAddedSoundEffect).play();
     setPageDetails("");
     setPageTitle("");
-    setPages([...pages, newDay]);
-    window.localStorage.setItem('pages', JSON.stringify([...pages, newDay]));
-    setSelectedDayBar(pages.length); //* Sets selected day bar (entry) to newly added one
-    setPagePtr(pages.length);
+    setPages([newDay, ...pages]);
+    //window.localStorage.setItem('pages', JSON.stringify([...pages, newDay]));
+    //setSelectedDayBar(newPageID); //* Sets selected day bar (entry) to newly added one
+    //setPagePtr(newPageID);
     setDateToAdd(null);
     onClose();
   };
 
-  const deleteDay = () => {
+  const deleteDay = async (pageID: string) => {
     new Audio(deleteDaySoundEffect).play();
-    
-    for (let i = 0; i < pages.length; i++) {
-      if (pages[i]["id"] == selectedDayBar) {
-        console.log(pages[i]);
 
-        if (i !== 0) {
-          setSelectedDayBar(pages[i - 1]["id"]);
-          setPagePtr(pages[i - 1]["id"]);
-        }
+    const { data, error } = await supabaseClient
+      .from("Pages") // Specify the table name
+      .delete()
+      .eq("id", pageID); // Use the page ID to identify the record
 
-        setPages(pages.filter((page) => page["id"] != selectedDayBar));
-        window.localStorage.setItem('pages', JSON.stringify(pages.filter((page) => page["id"] != selectedDayBar)));
-
-        return;
-      }
+    if (error) {
+      console.error("Error deleting page:", error);
+    } else {
+      console.log("Page deleted successfully:", data);
     }
+
+    setPages(pages.filter((page) => page.id !== parseInt(pageID)));
   };
 
   const resetFilters = () => {
@@ -259,14 +275,17 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
     for (let i = 0; i < filters.length; i++) {
       const currFilter = filters[i];
       //console.log('->', node, node["tags"], currFilter, node["tags"].includes(currFilter))
-      for(let i = 0; i < node["tags"].length; i++){
-        if(node["tags"][i][0] == currFilter[0] && node["tags"][i][1] == currFilter[1]){
+      for (let i = 0; i < node["tags"].length; i++) {
+        if (
+          node["tags"][i][0] == currFilter[0] &&
+          node["tags"][i][1] == currFilter[1]
+        ) {
           return true;
         }
       }
-      
-      for(let i = 0; i < node["mood"].length; i++){
-        if(node["mood"].includes(currFilter)){
+
+      for (let i = 0; i < node["mood"].length; i++) {
+        if (node["mood"].includes(currFilter)) {
           return true;
         }
       }
@@ -319,8 +338,12 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
         if (
           traverseTree_Filters(selectedFilters, currTree) === true &&
           (traverseTree_SearchText(searchText.toLowerCase(), currTree) ||
-            pages[i]["title"].toLowerCase().includes(searchText.toLowerCase()) ||
-            pages[i]["details"].toLowerCase().includes(searchText.toLowerCase()))
+            pages[i]["title"]
+              .toLowerCase()
+              .includes(searchText.toLowerCase()) ||
+            pages[i]["details"]
+              .toLowerCase()
+              .includes(searchText.toLowerCase()))
         ) {
           filteredDays.push(pages[i]);
         }
@@ -427,16 +450,15 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
 
   const playDayBarAudio = () => {
     new Audio(dayBarClickedSoundEffect).play();
-  }
+  };
 
   const renderFilters = () => {
     if (pages.length == 0) {
       return null;
     }
     if (showFilteredArray && showFilteredMonths) {
-      return reverseArray(
-        getArrayIntersection(filteredArray, filteredMonths)
-      ).map((page) => (
+      return 
+        getArrayIntersection(filteredArray, filteredMonths).map((page) => (
         <div
           key={page["id"]}
           onClick={() => {
@@ -450,8 +472,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
       ));
     } else {
       if (showFilteredArray) {
-        let reversedArr = reverseArray(filteredArray);
-        return reversedArr.map((page) => (
+        return filteredArray.map((page) => (
           <div
             key={page["id"]}
             onClick={() => {
@@ -466,8 +487,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
       }
 
       if (showFilteredMonths) {
-        let reversedArr = reverseArray(filteredMonths);
-        return reversedArr.map((page) => (
+        return filteredMonths.map((page) => (
           <div
             key={page["id"]}
             onClick={() => {
@@ -480,8 +500,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
           </div>
         ));
       } else {
-        let reversedArr = reverseArray(pages);
-        return reversedArr.map((page) => (
+        return pages.map((page) => (
           <div
             key={page["id"]}
             onClick={() => {
@@ -557,7 +576,11 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
           </div>
           <div class="w-full h-[40px] flex items-center justify-center">
             <h1 class="font-semibold text-[#746C59] underline text-xl">
-              {pages.find(page => page.id === pagePtr) != undefined ? chainView === false ? pages.find(page => page.id === pagePtr)["date"] : null : null}
+              {pages.find((page) => page.id === pagePtr) != undefined
+                ? chainView === false
+                  ? pages.find((page) => page.id === pagePtr)["date"]
+                  : null
+                : null}
             </h1>
           </div>
           {chainView === true ? (
@@ -572,7 +595,9 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
                 lineColor="#b794ec"
                 lineBorderRadius="10px"
               >
-                {pages.find(page => page.id === pagePtr) != undefined ? showTree(pages.find(page => page.id === pagePtr)["node"]) : null}
+                {pages.find((page) => page.id === pagePtr) != undefined
+                  ? showTree(pages.find((page) => page.id === pagePtr)["node"])
+                  : null}
               </Tree>
             </div>
           ) : null}
@@ -582,12 +607,17 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
       return (
         <div className="flex mt-[10%] ml-[5%]">
           <TextView
-            page={pages.find(page => page.id === pagePtr)}
+            page={pages.find((page) => page.id === pagePtr)}
             selectedDayBar={selectedDayBar}
           />
         </div>
       );
     }
+  };
+
+  const LogOut = async () => {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) throw error;
   };
 
   return (
@@ -743,7 +773,7 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
 
               <Tooltip label="Delete Entry" bg="#746C59" textColor="#eecabf">
                 <p
-                  onClick={() => deleteDay()}
+                  onClick={() => deleteDay(pagePtr)}
                   className="hover:cursor-pointer p-2 rounded-md bg-[#eecabf] text-[#746C59] border-2 border-[#746C59]"
                 >
                   <MdDeleteForever />
@@ -792,7 +822,9 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
         <DrawerOverlay />
         <DrawerContent>
           <DrawerCloseButton />
-          <DrawerHeader>Hey Miran!</DrawerHeader>
+          <DrawerHeader>
+            {session ? `Hey ${session.user.email}` : null}
+          </DrawerHeader>
 
           <DrawerBody>
             <div className="flex flex-col gap-5">
@@ -801,8 +833,12 @@ const MainPage = ({ pages, pagePtr, setPagePtr, showTree, setPages, tags, moods 
               <Button leftIcon={<FaShoppingBasket />} colorScheme="green">
                 Shop
               </Button>
-              <Button leftIcon={<IoMdHelp />} colorScheme="yellow">
-                Help
+              <Button
+                onClick={() => LogOut()}
+                leftIcon={<IoLogOut />}
+                colorScheme="red"
+              >
+                Log Out
               </Button>
               <Button
                 leftIcon={<IoSettingsSharp />}

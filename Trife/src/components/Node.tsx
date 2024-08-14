@@ -32,6 +32,8 @@ import {
   import { FileUploader } from "react-drag-drop-files";
   import emojiRegex from 'emoji-regex';
   import type { node } from '../App';
+import { supabaseClient } from '../config/supabase-client';
+import { Session } from '@supabase/supabase-js';
 
 //! Make a secret node type
 //! Add editing to nodes
@@ -61,23 +63,60 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
     const [openFileUploader, setOpenFileUploader] = useState<boolean>(false);
     const [detailsText, setDetailsText] = useState<string>(node["details"]);
     const [detailsTextForm, setDetailsTextForm] = useState<boolean>(node["details"] === "" ? false : true);
+
+    const [session, setSession] = useState<Session | null>();
+
+    useEffect(() => {
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
+          })
+      
+          supabaseClient.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+          })
+    }, [])
     
 
     const fileTypes = ["JPG", "PNG", "GIF"];
     
     const [file, setFile] = useState(null);
     
-    const handleFileUpload = (file) => {
+    const handleFileUpload = async (file) => {
         setFile(file);
         console.log(file);
-
+    
         const mediaItem = {
             original: URL.createObjectURL(file),
             thumbnail: URL.createObjectURL(file),
         };
-
+    
+        // Add the media item to the node
         node["media"].push(mediaItem);
-        setPages([...pages]);
+    
+        // Update the pages state
+        const updatedPages = [...pages];
+        setPages(updatedPages);
+    
+        // Get the current page based on pagePtr
+        const updatedPage = updatedPages.find(page => page.id == pagePtr);
+        console.log(updatedPage)
+    
+        if (updatedPage) {
+            // Update the page in Supabase
+            const { data, error } = await supabaseClient
+                .from('Pages')
+                .update({ node: updatedPage.node }) // Update the node structure in the database
+                .eq('id', updatedPage.id); // Ensure you're updating the correct page by its ID
+    
+            if (error) {
+                console.error('Error updating page after adding image:', error);
+                return;
+            }
+    
+            console.log('Page updated successfully with new image:', data);
+        } else {
+            console.error('Page not found for the provided pagePtr');
+        }
     };
 
     const handleSelectChange = (e) => setChoice(parseInt(e.target.value)); // I THINK it's to change node type option
@@ -85,48 +124,75 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
     const choiceToStyleMap = ["StyledNodeChoice", "StyledNodeResultGood", "StyledNodeResultMedium", "StyledNodeResultBad"]
     const choiceToMoodMap = ["moodChoice", "moodGood", "moodMedium", "moodBad"]
 
-    const addNode = () => {
-        if(choice < 1){
-            alert('Select a valid option');
-            return;
+    const addNode = async (pageId: number) => {
+        if (choice < 1) {
+          alert('Select a valid option');
+          return;
         }
-
+      
         const nodeToAdd: node = {
-            value: nodeText,
-            children: [],
-            nodeStyle: choiceToStyleMap[choice - 1],
-            moodStyle: choiceToMoodMap[choice - 1],
-            mood: "",
-            tags: selectedTags,
-            details: "",
-            isRoot: false,
-            media: [
-                {
-                    original: "https://picsum.photos/id/1018/1000/600/",
-                    thumbnail: "https://picsum.photos/id/1018/250/150/",
-                  }
-            ],
+          value: nodeText,
+          children: [],
+          nodeStyle: choiceToStyleMap[choice - 1],
+          moodStyle: choiceToMoodMap[choice - 1],
+          mood: "",
+          tags: selectedTags,
+          details: "",
+          isRoot: false,
+          media: [
+            {
+              original: "https://picsum.photos/id/1018/1000/600/",
+              thumbnail: "https://picsum.photos/id/1018/250/150/",
+            },
+          ],
         };
-
+    
+        
         node["children"].push(nodeToAdd);
-        setPages([...pages]);
-        window.localStorage.setItem('pages', JSON.stringify([...pages]));
-    }
+        let updatedPages = [...pages];
+        setPages(updatedPages);
+      
+        // Update the page in Supabase
+        const { data, error } = await supabaseClient
+          .from('Pages')
+          .update({ node: updatedPages.find(page => page.id === pageId)?.node }) // Update the node structure in the page
+          .eq('id', pageId); // Ensure you're updating the correct page by its ID
+      
+        if (error) {
+          console.error('Error updating page:', error);
+          return;
+        }
+      
+        console.log('Page updated successfully:', data);
+      };
 
-    const deleteNodeNew = (rootNode: node) => {
-        console.log(pages[pagePtr])
-        for(let i = 0; i < rootNode["children"].length; i++){
-            if(rootNode["children"][i] == node){
-                rootNode["children"] = rootNode["children"].filter((child) => child !== node);
-                setPages([ ...pages ]);
-                window.localStorage.setItem('pages', JSON.stringify([...pages]));
+    const deleteNodeNew = async (rootNode: node) => {
+    
+        for(let i = 0; i < rootNode.children.length; i++){
+            if(rootNode.children[i] == node){
+                rootNode.children = rootNode.children.filter((child) => child !== node);
+                const updatedPages = [...pages];
+                setPages(updatedPages);
+
+                const { data, error } = await supabaseClient
+                .from('Pages')
+                .update({ node: updatedPages.find(page => page.id == pagePtr).node }) // Update the node structure in the database
+                .eq('id', pagePtr); // Ensure you're updating the correct page by its ID
+    
+                if (error) {
+                    console.error('Error updating page after node deletion:', error);
+                    return;
+                }
+        
+                console.log('Page updated successfully with node deletion:', data);
+
                 return;
             }
             else{
-                deleteNodeNew(rootNode["children"][i]);
+                deleteNodeNew(rootNode.children[i]);
             }
         }
-    }
+    };
 
     function handleMoodMenu(event) {
         //^ right click on emoji mood bar
@@ -145,9 +211,24 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
         onOpen();
     }
 
-    const addNewTag = () => {
+    const addNewTag = async () => {
         setTags([...tags, [tagText, tagColor]])
-        window.localStorage.setItem('tags', JSON.stringify([...tags, [tagText, tagColor]]));
+        
+        const { data, error } = await supabaseClient
+        .from('Tags')
+        .insert([
+            {
+                userID: session?.user.id,
+                tagText: tagText,
+                tagColor: tagColor,
+            }
+        ]);
+
+    if (error) {
+        console.error('Error adding new tag:', error);
+    } else {
+        console.log('Tag added successfully:', data);
+    }
     }
 
     const selectTag = (tag) => {
@@ -168,49 +249,116 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
         onClose()
     }
 
-    const handleMoodChange = () => {
+    const handleMoodChange = async () => {
         node["mood"] = mood;
     
         if (mood === "🪄🪄🪄") {
             alert("You're a wizard Harry");
         }
     
-        // Use emoji-regex to extract emoji sequences
+        // Extract emoji sequences
         const emojiArray = Array.from(mood.match(emojiRegex()) || []);
-    
-        // Create a Set without including an empty string
+        
+        // Create a Set to store unique moods
         const uniqueMoodsSet = new Set([...moods, ...emojiArray]);
         const uniqueMoodsArray = Array.from(uniqueMoodsSet).filter(char => char !== "");
     
+        // Update local state
         setMoods(uniqueMoodsArray);
-        window.localStorage.setItem('moods', JSON.stringify(uniqueMoodsArray));
-        setPages([...pages]);
-        window.localStorage.setItem('pages', JSON.stringify([...pages]));
+        let updatedPages = [...pages]
+        setPages(updatedPages);
+
+
+        const { dataPage, errorPage } = await supabaseClient
+            .from('Pages')
+            .update(updatedPages.find(page => page.id == pagePtr)) // Update the node structure in the database
+            .eq('id', pagePtr); // Ensure you're updating the correct page by its ID
+      
+          if (errorPage) {
+            console.error('Error updating page details:', errorPage);
+            return;
+          }
+
+    
+        // Fetch existing moods for the user from Supabase
+        const { data: existingMoods, error } = await supabaseClient
+            .from('Moods')
+            .select('mood')
+            .eq('userID', session?.user.id);
+    
+        if (error) {
+            console.error('Error fetching existing moods:', error);
+            return;
+        }
+    
+        // Extract existing moods into a Set
+        const existingMoodsSet = new Set(existingMoods.map((entry) => entry.mood));
+    
+        // Filter out moods that are already stored
+        const newMoods = emojiArray.filter((mood) => !existingMoodsSet.has(mood));
+    
+        if (newMoods.length > 0) {
+            // Insert new moods into Supabase
+            const { error: insertError } = await supabaseClient
+                .from('Moods')
+                .insert(newMoods.map((mood) => ({
+                    mood: mood,
+                    userID: session?.user.id,
+                })));
+    
+            if (insertError) {
+                console.error('Error inserting new moods:', insertError);
+            } else {
+                console.log('New moods added successfully');
+            }
+        }
     };
 
-    const handleDetailTextChange = () => {
+    const handleDetailTextChange = async (pageId: number) => {
+        // Update the node's details
         node["details"] = detailsText;
+      
+        // Update local state
         setDetailsTextForm(true);
         setPages([ ...pages ]);
-        window.localStorage.setItem('pages', JSON.stringify([...pages]));
-    }
+      
+        // Find the page to update
+        const updatedPage = pages.find(page => page.id === pageId);
+      
+        if (updatedPage) {
+          // Update the page in Supabase
+          const { data, error } = await supabaseClient
+            .from('Pages')
+            .update({ node: updatedPage.node }) // Update the node structure in the database
+            .eq('id', pageId); // Ensure you're updating the correct page by its ID
+      
+          if (error) {
+            console.error('Error updating page details:', error);
+            return;
+          }
+      
+          console.log('Page details updated successfully:', data);
+        } else {
+          console.error('Page not found');
+        }
+    };
 
     const openDetailTextBox = () => {
         setDetailsText(node["details"]);
         setDetailsTextForm(false);
-    }
+    };
 
     const openDetailsPage = () => {
         onOpenManage();
         node["details"] === "" ? setDetailsTextForm(false) : setDetailsTextForm(true);
-    }
+    };
     
     const closeDetailsPage = () => {
         onCloseManage();
         setDetailsText("");
         setOpenFileUploader(false);
         setFile(null);
-    }
+    };
 
 
     return (
@@ -301,7 +449,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
                             <p onClick={() => addNewTag()} className='text-green-500 text-4xl hover:cursor-pointer'><FaCheckCircle /></p>
                         </div>
                     </div> : null}
-                    <Button onClick={() => addNode()} colorScheme='green'>Create</Button></div> : <div className="flex items-center justify-center"><Button className='w-full' onClick={() => deleteNodeNew(pages[pagePtr].node)} colorScheme='red'>Delete</Button></div>}
+                    <Button onClick={() => addNode(pagePtr)} colorScheme='green'>Create</Button></div> : <div className="flex items-center justify-center"><Button className='w-full' onClick={() => deleteNodeNew(pages.find(page => page.id === pagePtr)["node"])} colorScheme='red'>Delete</Button></div>}
                 </div>
             </ModalBody>
 
@@ -349,7 +497,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
                                     </Tag>
                             ))}
                             </div>
-                            {detailsTextForm === false ? <Button onClick={() => handleDetailTextChange()} colorScheme='green' variant="outline">Update Details</Button> : null}
+                            {detailsTextForm === false ? <Button onClick={() => handleDetailTextChange(pagePtr)} colorScheme='green' variant="outline">Update Details</Button> : null}
                             <div className="flex items-center justify-center">
                                 <ImageGallery items={node["media"]} />;
                             </div>

@@ -4,12 +4,20 @@ import { Tree, TreeNode } from "react-organizational-chart";
 import { ChakraProvider } from '@chakra-ui/react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import MainPage from './components/MainPage';
+import SignUp from './components/SignUp';
+import Login from './components/Login';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './hooks/Auth';
+import { supabaseClient } from './config/supabase-client';
+import { Session } from '@supabase/supabase-js';
+import emojiRegex from 'emoji-regex';
 
 export type page = {
   id: number,
+  userID: string | undefined,
   date: string,
   node: node,
-  title?: string //* Add this to MainPage functionality of adding new days [DONE]
+  title?: string
   details?: string
 }
 
@@ -45,69 +53,92 @@ export const startNode: node = {
 
 function App() {
 
-  useEffect(() => {
+  useEffect(() => { //! STORE AND FETCH MOODS AND TAGS AND MAKE MOODS AND TAGS WORK W/ SUPABASE
       const storedPages = window.localStorage.getItem('pages');
       const storedMoods = window.localStorage.getItem('moods');
       const storedTags = window.localStorage.getItem('tags');
 
-      if (storedPages) {
-        setPages(JSON.parse(storedPages));
-        let pagesArray = JSON.parse(storedPages);
-        let mxID = 0;
-        
-        for(let i = 0; i < pagesArray.length; i++){
-          if(pagesArray[i]["id"] > mxID){
-            mxID = pagesArray[i]["id"];
-          }
+      const fetchPages = async (userID) => {
+        const {data, error} = await supabaseClient
+        .from('Pages')
+        .select()
+        .eq('userID', userID)
+        .order('id', { ascending: false });
+
+        if(error){
+            console.log(error);
         }
 
-        setPagePtr(mxID);
-      } 
-      else {
-        window.localStorage.setItem('pages', JSON.stringify([]));
-        setPagePtr(0);
+        if(data){
+            //console.log(data);
+            setPages(data)
+        }
       }
 
-      if(storedMoods){
-        setMoods(JSON.parse(storedMoods));
-      }
-      else{
-        window.localStorage.setItem('moods', JSON.stringify([]));
+      const fetchTags = async (userID) => {
+        const {data, error} = await supabaseClient
+        .from('Tags')
+        .select()
+        .eq('userID', userID)
+
+        if(error){
+            console.log(error);
+        }
+
+        if(data){
+            //console.log(data);
+            let formattedTags = [];
+            for(let i = 0; i < data.length; i++){
+              formattedTags.push([data[i].tagText, data[i].tagColor]);
+            }
+            setTags(formattedTags);
+        }
       }
 
-      if(storedTags){
-        setTags(JSON.parse(storedTags));
-      }
-      else{
-        window.localStorage.setItem('tags', JSON.stringify([]));
+      const fetchMoods = async (userID) => {
+        const {data, error} = await supabaseClient
+        .from('Moods')
+        .select()
+        .eq('userID', userID)
+
+        if(error){
+            console.log(error);
+        }
+
+        if(data){
+            console.log('Moods', data);
+            let formattedMoods = [];
+
+            for(let i = 0; i < data.length; i++){
+              formattedMoods.push(data[i].mood);
+            }
+
+            setMoods(formattedMoods);
+        }
       }
 
-
+      supabaseClient.auth.getSession().then(({ data: { session } }) => {
+        fetchPages(session?.user.id);
+        fetchTags(session?.user.id);
+        fetchMoods(session?.user.id);
+        setSession(session)
+      })
+  
+      supabaseClient.auth.onAuthStateChange((_event, session) => {
+        fetchPages(session?.user.id);
+        fetchTags(session?.user.id);
+        fetchMoods(session?.user.id);
+        setSession(session)
+      })
 
   }, [])
-  
-  const testPage: page = {
-    id: 1,
-    date: "02/01/2024",
-    node: structuredClone(startNode),
-    title: "Marshall Wace - Insight Day",
-    details: "Trading, AI, System Design"
-  }
-
-  const testPage2: page = {
-    id: 0,
-    date: "01/01/2024",
-    node: structuredClone(startNode),
-    title: "Jane Street Event",
-    details: "Black-Scholes, Options Trading, HFT"
-  }
-
-  //! ADD TAGS AND MOODS TO LOCALSTORAGE TO PERSIST THEM
 
   const [pages, setPages] = useState<page[]>([]); // Array of all pages (entries)
   const [pagePtr, setPagePtr] = useState<number>(0); // ID of currently selected page
   const [tags, setTags] = useState<string[][]>([]) // Tags Array -> [tagTitle, tagColor]
   const [moods, setMoods] = useState<string[]>([]); // All Used Moods
+
+  const [session, setSession] = useState<Session | null>();
 
   const showTree = (node: node) => { // Recursively draws all nodes by taking in root node as Node itself calls showTree on all children
     return (
@@ -121,9 +152,13 @@ function App() {
     <>
       <BrowserRouter>
         <ChakraProvider>
-          <Routes>
-            <Route path='/' element={<MainPage pages={pages} pagePtr={pagePtr} setPagePtr={setPagePtr} setPages={setPages} showTree={showTree} tags={tags} moods={moods} />} />
-          </Routes>
+          <AuthProvider>
+            <Routes>
+              <Route path='/signup' element={<SignUp />} />
+              <Route path='/login' element={<Login />} />
+              <Route path='/' element={<ProtectedRoute><MainPage pages={pages} pagePtr={pagePtr} setPagePtr={setPagePtr} setPages={setPages} showTree={showTree} tags={tags} moods={moods} /></ProtectedRoute>} />
+            </Routes>
+          </AuthProvider>
         </ChakraProvider>
       </BrowserRouter>
     </>
