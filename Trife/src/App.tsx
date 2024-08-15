@@ -12,6 +12,13 @@ import { supabaseClient } from './config/supabase-client';
 import { Session } from '@supabase/supabase-js';
 import emojiRegex from 'emoji-regex';
 
+//util functions
+import { orderDatesDescending } from './utils/utils';
+
+//store
+import { usePageStore } from './store/page-store';
+
+//types
 export type page = {
   id: number,
   userID: string | undefined,
@@ -53,7 +60,14 @@ export const startNode: node = {
 
 function App() {
 
-  useEffect(() => { //! STORE AND FETCH MOODS AND TAGS AND MAKE MOODS AND TAGS WORK W/ SUPABASE
+  const {pagePtr, setPagePtr} = usePageStore((state) => (
+    {
+    pagePtr: state.pagePtr, 
+    setPagePtr: state.setPagePtr
+    }
+  ));
+
+  useEffect(() => {
 
       const fetchPages = async (userID) => {
         const {data, error} = await supabaseClient
@@ -67,7 +81,9 @@ function App() {
         }
 
         if(data){
-            //console.log(data);
+            
+            data.sort(orderDatesDescending);
+
             setPages(data)
         }
       }
@@ -131,7 +147,6 @@ function App() {
   }, [])
 
   const [pages, setPages] = useState<page[]>([]); // Array of all pages (entries)
-  const [pagePtr, setPagePtr] = useState<number>(0); // ID of currently selected page
   const [tags, setTags] = useState<string[][]>([]) // Tags Array -> [tagTitle, tagColor]
   const [moods, setMoods] = useState<string[]>([]); // All Used Moods
 
@@ -153,7 +168,7 @@ function App() {
             <Routes>
               <Route path='/signup' element={<SignUp />} />
               <Route path='/login' element={<Login />} />
-              <Route path='/' element={<ProtectedRoute><MainPage pages={pages} pagePtr={pagePtr} setPagePtr={setPagePtr} setPages={setPages} showTree={showTree} tags={tags} moods={moods} /></ProtectedRoute>} />
+              <Route path='/' element={<ProtectedRoute><MainPage pages={pages} setPages={setPages} showTree={showTree} tags={tags} moods={moods} /></ProtectedRoute>} />
             </Routes>
           </AuthProvider>
         </ChakraProvider>

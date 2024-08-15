@@ -76,12 +76,15 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
           })
     }, [])
     
+    
 
     const fileTypes = ["JPG", "PNG", "GIF"];
+    const choiceToStyleMap = ["StyledNodeChoice", "StyledNodeResultGood", "StyledNodeResultMedium", "StyledNodeResultBad"]
+    const choiceToMoodMap = ["moodChoice", "moodGood", "moodMedium", "moodBad"]
     
     const [file, setFile] = useState(null);
     
-    const handleFileUpload = async (file) => {
+    const handleFileUpload = async (file: Blob | MediaSource) => {
         setFile(file);
         console.log(file);
     
@@ -119,10 +122,7 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
         }
     };
 
-    const handleSelectChange = (e) => setChoice(parseInt(e.target.value)); // I THINK it's to change node type option
-
-    const choiceToStyleMap = ["StyledNodeChoice", "StyledNodeResultGood", "StyledNodeResultMedium", "StyledNodeResultBad"]
-    const choiceToMoodMap = ["moodChoice", "moodGood", "moodMedium", "moodBad"]
+    const handleSelectChange = (e) => setChoice(parseInt(e.target.value)); // Changes value of choice based on option clicked on dropdown
 
     const addNode = async (pageId: number) => {
         if (choice < 1) {

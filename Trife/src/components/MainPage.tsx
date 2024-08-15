@@ -49,11 +49,13 @@ import deleteDaySoundEffect from "../assets/deleteDaySoundEffect.mp3";
 import { supabaseClient } from "../config/supabase-client";
 import { Session } from "@supabase/supabase-js";
 
-type ValuePiece = Date | null;
+//utils
+import { orderDatesDescending } from "../utils/utils.ts";
 
-type Value = ValuePiece | [ValuePiece, ValuePiece];
+//store
+import { usePageStore } from "../store/page-store.ts";
 
-//! Make dayBar's ordered based on date not just reversed order of arr
+
 //! Add New Node Type -> Retrospect. To show what you would have done differently in retrospect and how it could / would have gone
 //! Find way to truncate tree so it does not go past page width and height in non-expanded tree view
 
@@ -66,10 +68,15 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 //* - Image Gallery [DONE]
 //* - Show All The Selected Tags for the Node [DONE]
 //* Chain trees to show all trees in one go [DONE]
+//* Make dayBar's ordered based on date not just reversed order of arr [DONE]
 
-type MainPageProps = {pages: page[], pagePtr: number, setPagePtr: React.Dispatch<React.SetStateAction<number>>, showTree: JSX.Element, setPages: React.Dispatch<React.SetStateAction<page[]>>, tags: string[][], moods: string[]}
+type MainPageProps = {pages: page[], showTree: JSX.Element, setPages: React.Dispatch<React.SetStateAction<page[]>>, tags: string[][], moods: string[]}
 
-const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} : MainPageProps) => {
+type ValuePiece = Date | null;
+type Value = ValuePiece | [ValuePiece, ValuePiece];
+
+
+const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
   useEffect(() => {
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -82,7 +89,6 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
 
   //! Main Page Local State
 
-  const [selectedDayBar, setSelectedDayBar] = useState<number>(0); // Stores ID of currently selected page (same as pagePtr therefore redunant)
   const [selectedFilter, setSelectedFilter] = useState<string>(""); // "tag", "mood", etc -> determines what filter menu to open
   const [selectedFilters, setSelectedFilters] = useState([]); // STORES ALL FILTERS (TAGS, MOODS, ETC)
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
@@ -100,6 +106,13 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
   const [chainView, setChainView] = useState(false);
   const [currFilteredMonth, setCurrFilteredMonth] = useState("");
   const [session, setSession] = useState<Session | null>();
+
+  const {pagePtr, setPagePtr} = usePageStore((state) => (
+    {
+    pagePtr: state.pagePtr, 
+    setPagePtr: state.setPagePtr
+    }
+  ));
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
@@ -172,7 +185,6 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
     } else {
       const insertedPage = data[0]; // Assuming you inserted a single record
       newPageID = insertedPage.id; // This is the ID of the newly inserted page
-      setSelectedDayBar(newPageID); //* Sets selected day bar (entry) to newly added one
       setPagePtr(newPageID);
     }
 
@@ -187,10 +199,14 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
 
     newDay.id = newPageID;
 
+    const updatedPages = [newDay, ...pages]
+
+    updatedPages.sort(orderDatesDescending);
+
     new Audio(newDayAddedSoundEffect).play();
     setPageDetails("");
     setPageTitle("");
-    setPages([newDay, ...pages]);
+    setPages(updatedPages);
     //window.localStorage.setItem('pages', JSON.stringify([...pages, newDay]));
     //setSelectedDayBar(newPageID); //* Sets selected day bar (entry) to newly added one
     //setPagePtr(newPageID);
@@ -386,7 +402,8 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
 
     for (let i = 0; i < pages.length; i++) {
       if (pages[i]["date"] == formattedToday) {
-        setSelectedDayBar(i); // set current page to selected calendar date as it already exists
+        //setSelectedDayBar(pages[i].id); // set current page to selected calendar date as it already exists
+        setPagePtr(pages[i].id);
         return;
       }
     }
@@ -461,11 +478,10 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
           key={page["id"]}
           onClick={() => {
             playDayBarAudio();
-            setSelectedDayBar(page["id"]);
             setPagePtr(page["id"]);
           }}
         >
-          <DayBar page={page} highlighted={page["id"] === selectedDayBar} />
+          <DayBar page={page} highlighted={page["id"] === pagePtr} />
         </div>
       ));
     } else {
@@ -475,11 +491,10 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
             key={page["id"]}
             onClick={() => {
               playDayBarAudio();
-              setSelectedDayBar(page["id"]);
               setPagePtr(page["id"]);
             }}
           >
-            <DayBar page={page} highlighted={page["id"] === selectedDayBar} />
+            <DayBar page={page} highlighted={page["id"] === pagePtr} />
           </div>
         ));
       }
@@ -490,11 +505,10 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
             key={page["id"]}
             onClick={() => {
               playDayBarAudio();
-              setSelectedDayBar(page["id"]);
               setPagePtr(page["id"]);
             }}
           >
-            <DayBar page={page} highlighted={page["id"] === selectedDayBar} />
+            <DayBar page={page} highlighted={page["id"] === pagePtr} />
           </div>
         ));
       } else {
@@ -503,11 +517,10 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
             key={page["id"]}
             onClick={() => {
               playDayBarAudio();
-              setSelectedDayBar(page["id"]);
               setPagePtr(page["id"]);
             }}
           >
-            <DayBar page={page} highlighted={page["id"] === selectedDayBar} />
+            <DayBar page={page} highlighted={page["id"] === pagePtr} />
           </div>
         ));
       }
@@ -581,7 +594,7 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
             <div className="mt-[5%] flex flex-col gap-10">
               {renderChainView()}
             </div>
-          ) : selectedDayBar != null ? (
+          ) : pagePtr != null ? (
             <div className="mt-[10%]">
               <Tree
                 label={""}
@@ -602,7 +615,7 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
         <div className="flex mt-[10%] ml-[5%]">
           <TextView
             page={pages.find((page) => page.id === pagePtr)}
-            selectedDayBar={selectedDayBar}
+            selectedDayBar={pagePtr}
           />
         </div>
       );
@@ -823,11 +836,6 @@ const MainPage = ({pages, pagePtr, setPagePtr, showTree, setPages, tags, moods} 
 
           <DrawerBody>
             <div className="flex flex-col gap-5">
-              <Button leftIcon={<IoHome />}>Home</Button>
-              <Button leftIcon={<FaUser />}>Profile</Button>
-              <Button leftIcon={<FaShoppingBasket />} colorScheme="green">
-                Shop
-              </Button>
               <Button
                 onClick={() => LogOut()}
                 leftIcon={<IoLogOut />}
