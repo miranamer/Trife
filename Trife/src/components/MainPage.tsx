@@ -54,7 +54,9 @@ import { orderDatesDescending } from "../utils/utils.ts";
 
 //store
 import { usePageStore } from "../store/page-store.ts";
-
+import SearchBar from "./SearchBar";
+import SearchBarDropDown from "./SearchBarDropDown.tsx";
+import SquareTooltipButton from "./SquareTooltipButton.tsx";
 
 //! Add New Node Type -> Retrospect. To show what you would have done differently in retrospect and how it could / would have gone
 //! Find way to truncate tree so it does not go past page width and height in non-expanded tree view
@@ -70,13 +72,24 @@ import { usePageStore } from "../store/page-store.ts";
 //* Chain trees to show all trees in one go [DONE]
 //* Make dayBar's ordered based on date not just reversed order of arr [DONE]
 
-type MainPageProps = {pages: page[], showTree: JSX.Element, setPages: React.Dispatch<React.SetStateAction<page[]>>, tags: string[][], moods: string[]}
+type MainPageProps = {
+  pages: page[];
+  showTree: JSX.Element;
+  setPages: React.Dispatch<React.SetStateAction<page[]>>;
+  tags: string[][];
+  moods: string[];
+};
 
 type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
 
-
-const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
+const MainPage = ({
+  pages,
+  showTree,
+  setPages,
+  tags,
+  moods,
+}: MainPageProps) => {
   useEffect(() => {
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -107,12 +120,10 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
   const [currFilteredMonth, setCurrFilteredMonth] = useState("");
   const [session, setSession] = useState<Session | null>();
 
-  const {pagePtr, setPagePtr} = usePageStore((state) => (
-    {
-    pagePtr: state.pagePtr, 
-    setPagePtr: state.setPagePtr
-    }
-  ));
+  const { pagePtr, setPagePtr } = usePageStore((state) => ({
+    pagePtr: state.pagePtr,
+    setPagePtr: state.setPagePtr,
+  }));
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
@@ -199,7 +210,7 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
 
     newDay.id = newPageID;
 
-    const updatedPages = [newDay, ...pages]
+    const updatedPages = [newDay, ...pages];
 
     updatedPages.sort(orderDatesDescending);
 
@@ -272,10 +283,10 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
   //^ recursively traverses nodes to find searchText parameter in trees
   const traverseTree_SearchText = (searchText: string, node: node) => {
     searchText = searchText.toLowerCase();
-    
+
     const lowercaseValue = node["value"].toLowerCase();
     const lowercaseNodeDetails = node["details"].toLowerCase();
-    
+
     if (
       lowercaseValue.includes(searchText) ||
       lowercaseNodeDetails.includes(searchText)
@@ -295,10 +306,10 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
   //^ recursively traverses nodes to find if they contain any of the selected filters (tags, moods)
   const traverseTree_Filters = (filters: any[], node: node) => {
     for (let i = 0; i < filters.length; i++) {
-      
       const currFilter = filters[i];
-      
-      for (let i = 0; i < node["tags"].length; i++) { // Checking if any tags on current node == currFilter (which may be a tag or mood)
+
+      for (let i = 0; i < node["tags"].length; i++) {
+        // Checking if any tags on current node == currFilter (which may be a tag or mood)
         if (
           node["tags"][i][0] == currFilter[0] &&
           node["tags"][i][1] == currFilter[1]
@@ -307,7 +318,8 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
         }
       }
 
-      for (let i = 0; i < node["mood"].length; i++) { // Checking if node mood is equal to currFilter
+      for (let i = 0; i < node["mood"].length; i++) {
+        // Checking if node mood is equal to currFilter
         if (node["mood"].includes(currFilter)) {
           return true;
         }
@@ -325,15 +337,15 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
 
   //^ called when clicking enter in the search bar -> sets filteredArray to array of filtered pages to show correct pages based on filters and or text
   const searchForDays = (e) => {
-
     e.preventDefault();
 
     const filteredDays = [];
 
-    if (searchText === "" && selectedFilters.length == 0) { //? No Filters + No Text = Reset Filters
+    if (searchText === "" && selectedFilters.length == 0) {
+      //? No Filters + No Text = Reset Filters
       resetFilters();
-    } 
-    else if (searchText != "" && selectedFilters.length == 0) { //? Search Text + No Filters -> looking for text in tree, title + details
+    } else if (searchText != "" && selectedFilters.length == 0) {
+      //? Search Text + No Filters -> looking for text in tree, title + details
       for (let i = 0; i < pages.length; i++) {
         const currTree = pages[i]["node"];
         if (
@@ -346,12 +358,11 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
       }
       setFilteredArray(filteredDays); // Output array with all the pages that have the inputted search text
       setShowFilteredArray(true);
-    } 
-    else if (searchText != "" && selectedFilters.length > 0) { //? Search Text + Filter(s)
+    } else if (searchText != "" && selectedFilters.length > 0) {
+      //? Search Text + Filter(s)
       for (let i = 0; i < pages.length; i++) {
-        
         const currTree = pages[i]["node"];
-        
+
         if (
           traverseTree_Filters(selectedFilters, currTree) === true &&
           (traverseTree_SearchText(searchText.toLowerCase(), currTree) ||
@@ -368,8 +379,8 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
 
       setFilteredArray(filteredDays);
       setShowFilteredArray(true);
-    } 
-    else if (searchText === "" && selectFilter.length > 0) { //? No Search Text + Filters Present
+    } else if (searchText === "" && selectFilter.length > 0) {
+      //? No Search Text + Filters Present
       for (let i = 0; i < pages.length; i++) {
         const currTree = pages[i]["node"];
         if (traverseTree_Filters(selectedFilters, currTree)) {
@@ -467,7 +478,7 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
   };
 
   //^ renders the correct pages based on all filters
-  const renderFilters = () => {
+  const displayPages = () => {
     if (pages.length == 0) {
       return null;
     }
@@ -534,8 +545,10 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
     }
 
     if (showFilteredArray && showFilteredMonths) {
-      return 
-        getArrayIntersection(filteredArray, filteredMonths).map((page) => <ChainViewTree page={page} showTree={showTree} />);
+      return;
+      getArrayIntersection(filteredArray, filteredMonths).map((page) => (
+        <ChainViewTree page={page} showTree={showTree} />
+      ));
     } else {
       if (showFilteredArray) {
         return filteredArray.map((page) => (
@@ -567,20 +580,16 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
       return (
         <>
           <div className="absolute top-[10px] right-[10px] flex gap-2">
-            <Tooltip label="Enlarge" bg="#746C59" textColor="#EEE1BF">
-              <p className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]">
-                <ImEnlarge2 />
-              </p>
-            </Tooltip>
-            <Tooltip label="Chain" bg="#746C59" textColor="#EEE1BF">
-              <p
-                onClick={() => setChainView(!chainView)}
-                className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]"
-              >
-                <FaLink />
-              </p>
-            </Tooltip>
+
+          {pagePtr != -1 ?
+          <>
+            <SquareTooltipButton label="Enlarge" toolTipBg="#746C59" toolTipTextColor="#EEE1BF" onClickFunction={() => null} buttonBg="#EEE1BF" buttonTextColor="#746C59" Icon={ImEnlarge2} />
+            <SquareTooltipButton label="Chain View" toolTipBg="#746C59" toolTipTextColor="#EEE1BF" onClickFunction={() => setChainView(!chainView)} buttonBg="#EEE1BF" buttonTextColor="#746C59" Icon={FaLink} />
+          </>
+           : null}
+          
           </div>
+          
           <div class="w-full h-[40px] flex items-center justify-center">
             <h1 class="font-semibold text-[#746C59] underline text-xl">
               {pages.find((page) => page.id === pagePtr) != undefined
@@ -637,54 +646,22 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
         >
           <IoMenu />
         </p>
+
         <div className="flex gap-3 w-full">
           <div className="flex flex-col gap-3 w-[50%] h-[95vh] mt-4">
-            <div className="relative bg-[#FAF6EC] w-full h-[100px] border-[#746C59] border-[2px] flex items-center p-3 rounded-md font-bold">
-              <form className="w-full" onSubmit={(e) => searchForDays(e)}>
-                <input
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  className="caretClass w-full text-3xl text-[#746C59] bg-transparent focus:outline-none caret-[#746C59]"
-                  placeholder="Search For Text"
-                />
-              </form>
-              <div
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="rounded-md hover:cursor-pointer absolute right-0 flex items-center justify-center border-[#746C59] border-l-[2px] w-[100px] h-full bg-[#EFE2C0]"
-              >
-                <p className="text-4xl text-[#746C59]">
-                  {menuOpen === false ? (
-                    <IoIosArrowDropdown />
-                  ) : (
-                    <IoIosArrowDropup />
-                  )}
-                </p>
-              </div>
-            </div>
+            <SearchBar
+              searchText={searchText}
+              setSearchText={setSearchText}
+              searchForDays={searchForDays}
+              menuOpen={menuOpen}
+              setMenuOpen={setMenuOpen}
+            />
 
             {menuOpen ? (
-              <div className="relative mb-[150px]">
-                <div className="rounded-md bg-[#FAF6EC] flex flex-col w-[100px] absolute right-0 border-[#746C59] border-[2px] justify-end">
-                  <h1
-                    onClick={() => selectFilter("tag")}
-                    className="hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] border-b-2 border-b-[#746C59] p-2 hover:cursor-pointer"
-                  >
-                    Tag
-                  </h1>
-                  <h1
-                    onClick={() => selectFilter("mood")}
-                    className="hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] border-b-2 border-b-[#746C59] p-2 hover:cursor-pointer"
-                  >
-                    Mood
-                  </h1>
-                  <h1
-                    onClick={() => resetFilters()}
-                    className="hover:bg-[#746C59] hover:text-[#FAF6EC] font-semibold text-[#746C59] p-2 hover:cursor-pointer"
-                  >
-                    Reset Filters
-                  </h1>
-                </div>
-              </div>
+              <SearchBarDropDown
+                selectFilter={selectFilter}
+                resetFilters={resetFilters}
+              />
             ) : null}
 
             {selectedFilter === "tag" || selectedFilter === "mood" ? (
@@ -712,6 +689,7 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
                     </p>
                   </Tooltip>
                 </div>
+
                 {showFilteredMonths ? (
                   <Tag
                     size="lg"
@@ -728,6 +706,7 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
                     {showFilteredMonths ? <TagCloseButton /> : null}
                   </Tag>
                 ) : null}
+
                 <div
                   onClick={() => setCalendarOpen(!calendarOpen)}
                   className="hover:cursor-pointer rounded-full mr-6 w-[60px] border-2 border-[#746C59] h-[60px] bg-[#EEE1BF] flex items-center justify-center"
@@ -751,7 +730,7 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
                 </div>
               ) : null}
 
-              {renderFilters()}
+              {displayPages()}
             </div>
           </div>
 
@@ -761,32 +740,14 @@ const MainPage = ({pages, showTree, setPages, tags, moods} : MainPageProps) => {
             } rounded-md border-[#746C59] border-[2px] p-2 overflow-scroll no-scrollbar`}
           >
             <div className="absolute top-[10px] left-[10px] flex gap-2">
-              <Tooltip label="Tree View" bg="#746C59" textColor="#EEE1BF">
-                <p
-                  onClick={() => setTreeView(true)}
-                  className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]"
-                >
-                  <ImTree />
-                </p>
-              </Tooltip>
+              
+              {pagePtr != -1 ? (<>
+              <SquareTooltipButton label="Tree View" toolTipBg="#746C59" toolTipTextColor="#EEE1BF" onClickFunction={() => setTreeView(true)} buttonBg="#EEE1BF" buttonTextColor="#746C59" Icon={ImTree} />
 
-              <Tooltip label="Text View" bg="#746C59" textColor="#EEE1BF">
-                <p
-                  onClick={() => setTreeView(false)}
-                  className="hover:cursor-pointer p-2 rounded-md bg-[#EEE1BF] text-[#746C59] border-2 border-[#746C59]"
-                >
-                  <IoIosPaper />
-                </p>
-              </Tooltip>
+              <SquareTooltipButton label="Text View" toolTipBg="#746C59" toolTipTextColor="#EEE1BF" onClickFunction={() => setTreeView(false)} buttonBg="#EEE1BF" buttonTextColor="#746C59" Icon={IoIosPaper} />
+              
+              <SquareTooltipButton label="Delete Page" toolTipBg="#746C59" toolTipTextColor="#eecabf" onClickFunction={() => deleteDay(pagePtr)} buttonBg="#DBB1A4" buttonTextColor="#746C59" Icon={MdDeleteForever} /></>) : null}
 
-              <Tooltip label="Delete Entry" bg="#746C59" textColor="#eecabf">
-                <p
-                  onClick={() => deleteDay(pagePtr)}
-                  className="hover:cursor-pointer p-2 rounded-md bg-[#eecabf] text-[#746C59] border-2 border-[#746C59]"
-                >
-                  <MdDeleteForever />
-                </p>
-              </Tooltip>
             </div>
 
             {renderRightSide()}

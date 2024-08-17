@@ -6,6 +6,6 @@ type PageStore = {
 };
 
 export const usePageStore = create<PageStore>((set) => ({
-    pagePtr: 0,
+    pagePtr: -1,
     setPagePtr: (ptr) => set({ pagePtr: ptr })
 }));

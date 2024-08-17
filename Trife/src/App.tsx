@@ -155,7 +155,7 @@ function App() {
   const showTree = (node: node) => { // Recursively draws all nodes by taking in root node as Node itself calls showTree on all children
     return (
       <>
-        <Node node={node} showTree={showTree} pages={pages} setPages={setPages} pagePtr={pagePtr} tags={tags} setTags={setTags} moods={moods} setMoods={setMoods} />
+        <Node node={node} showTree={showTree} pages={pages} setPages={setPages} tags={tags} setTags={setTags} moods={moods} setMoods={setMoods} />
       </>
     );
   };

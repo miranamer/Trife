@@ -35,6 +35,9 @@ import {
 import { supabaseClient } from '../config/supabase-client';
 import { Session } from '@supabase/supabase-js';
 
+//store
+import { usePageStore } from '../store/page-store';
+
 //! Make a secret node type
 //! Add editing to nodes
 //! Make a new page with a default start tree when the next day arrives
@@ -47,7 +50,7 @@ import { Session } from '@supabase/supabase-js';
 //! Add full tree view which shows all trees in column form (chronological order)
 //! TreeCounter = Show how many trees someone has made
 
-const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, setMoods}) => {
+const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods}) => {
 
     const { isOpen, onOpen, onClose } = useDisclosure() // Manage Node
     const { isOpen: isOpenMood, onOpen: onOpenMood, onClose: onCloseMood } = useDisclosure() // Mood
@@ -65,6 +68,13 @@ const Node = ({node, showTree, pages, setPages, pagePtr, tags, setTags, moods, s
     const [detailsTextForm, setDetailsTextForm] = useState<boolean>(node["details"] === "" ? false : true);
 
     const [session, setSession] = useState<Session | null>();
+
+    const {pagePtr, setPagePtr} = usePageStore((state) => (
+        {
+        pagePtr: state.pagePtr, 
+        setPagePtr: state.setPagePtr
+        }
+      ));
 
     useEffect(() => {
         supabaseClient.auth.getSession().then(({ data: { session } }) => {

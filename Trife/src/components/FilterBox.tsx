@@ -1,4 +1,5 @@
-import React from "react";
+import {React, useRef} from "react";
+import Draggable from 'react-draggable';
 
 import { Tag, TagLabel, TagCloseButton } from "@chakra-ui/react";
 
@@ -14,6 +15,35 @@ const FilterBox = ({
   addSelectedMood,
   setSelectedFilter
 }) => {
+
+
+  const binRef = useRef(null);
+
+  const handleStop = (e, data, tag) => {
+    // Get the bin element's bounding rectangle
+    const binRect = binRef.current.getBoundingClientRect();
+
+    const draggedRect = e.target.getBoundingClientRect();
+
+    console.log('stopped', draggedRect.left + window.scrollX, binRect.left + window.scrollX, draggedRect.top + window.scrollY, binRect.top + window.scrollY);
+
+    const isOverBin = !(
+      draggedRect.right < binRect.left ||
+      draggedRect.left > binRect.right ||
+      draggedRect.bottom < binRect.top ||
+      draggedRect.top > binRect.bottom
+    );
+  
+    if (isOverBin) {
+      //setTags(tags.filter((t) => t !== tag));
+      console.log('deleted', tag);
+      // Optionally, you can implement further deletion logic here.
+    }
+  };
+
+  // future: <p ref={binRef} className="absolute right-5 top-[50%] w-[50px] h-[30px] bg-red-200 text-center">Bin</p>
+
+
   return (
     <>
       <div class="bg-[#FAF6EC] w-[100%] h-[150px] border-[#746C59] border-[2px] flex p-3 rounded-md relative">
