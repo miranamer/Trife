@@ -746,7 +746,7 @@ const MainPage = ({
 
               <SquareTooltipButton label="Text View" toolTipBg="#746C59" toolTipTextColor="#EEE1BF" onClickFunction={() => setTreeView(false)} buttonBg="#EEE1BF" buttonTextColor="#746C59" Icon={IoIosPaper} />
               
-              <SquareTooltipButton label="Delete Page" toolTipBg="#746C59" toolTipTextColor="#eecabf" onClickFunction={() => deleteDay(pagePtr)} buttonBg="#DBB1A4" buttonTextColor="#746C59" Icon={MdDeleteForever} /></>) : null}
+              <SquareTooltipButton label="Delete Page" toolTipBg="#746C59" toolTipTextColor="#eecabf" onClickFunction={() => deleteDay(pagePtr)} buttonBg="#eecabf" buttonTextColor="#746C59" Icon={MdDeleteForever} /></>) : null}
 
             </div>
 

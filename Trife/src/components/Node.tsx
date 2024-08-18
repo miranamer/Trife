@@ -31,41 +31,52 @@ import {
   import "react-image-gallery/styles/css/image-gallery.css";
   import { FileUploader } from "react-drag-drop-files";
   import emojiRegex from 'emoji-regex';
-  import type { node } from '../App';
+  import type { node, page } from '../App';
 import { supabaseClient } from '../config/supabase-client';
 import { Session } from '@supabase/supabase-js';
 
 //store
 import { usePageStore } from '../store/page-store';
 
-//! Make a secret node type
-//! Add editing to nodes
-//! Make a new page with a default start tree when the next day arrives
-//! Left Click -> Details page w/ addition text, images and all tags like real journal
-//! Right Click -> Manage Node Page (Add, Edit, Delete)
-//! Option to delete or edit tags from global array
 
-//! FUTURE -> store trees in firebase or some storage
-//! Add themes (e.g: Pastel, Dark Mode, Dracula, Galaxy, Studio Ghibli)
-//! Add full tree view which shows all trees in column form (chronological order)
-//! TreeCounter = Show how many trees someone has made
+type NodeProps = {
+    node: node;
+    showTree: boolean;
+    pages: page[];
+    setPages: React.Dispatch<React.SetStateAction<page[]>>;
+    tags: string[][];
+    setTags: React.Dispatch<React.SetStateAction<string[][]>>;
+    moods: string[];
+    setMoods: React.Dispatch<React.SetStateAction<string[]>>;
+};
 
-const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods}) => {
+enum NodeStyle{
+    choiceNode = "StyledNodeChoice",
+    goodNode = "StyledNodeResultGood",
+    mediumNode = "StyledNodeResultMedium",
+    badNode = "StyledNodeResultBad"
+}
 
-    const { isOpen, onOpen, onClose } = useDisclosure() // Manage Node
-    const { isOpen: isOpenMood, onOpen: onOpenMood, onClose: onCloseMood } = useDisclosure() // Mood
-    const { isOpen: isOpenManage, onOpen: onOpenManage, onClose: onCloseManage } = useDisclosure() // Details Page
+const MoodStyle = {[NodeStyle.choiceNode]: "moodChoice", [NodeStyle.goodNode]: "moodGood", [NodeStyle.mediumNode]: "moodMedium", [NodeStyle.badNode]: "moodBad"}
+
+const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} : NodeProps) => {
+
+    const { isOpen, onOpen, onClose } = useDisclosure() // Manage Node Modal
+    const { isOpen: isOpenMood, onOpen: onOpenMood, onClose: onCloseMood } = useDisclosure() // Mood Modal
+    const { isOpen: isOpenManage, onOpen: onOpenManage, onClose: onCloseManage } = useDisclosure() // Details Page Modal
     
-    const [choice, setChoice] = useState<number>(0);
-    const [nodeText, setNodeText] = useState<string>("");
-    const [tagMaker, setTagMaker] = useState<boolean>(false);
-    const [tagColor, setTagColor] = useState<string>("");
-    const [tagText, setTagText] = useState<string>("");
-    const [selectedTags, setSelectedTags] = useState<string[][]>([]);
-    const [mood, setMood] = useState<string>(node["mood"]);
-    const [openFileUploader, setOpenFileUploader] = useState<boolean>(false);
-    const [detailsText, setDetailsText] = useState<string>(node["details"]);
-    const [detailsTextForm, setDetailsTextForm] = useState<boolean>(node["details"] === "" ? false : true);
+    const [selectedNodeType, setSelectedNodeType] = useState<string>(""); // Selected node from node type dropdown
+    const [nodeText, setNodeText] = useState<string>(""); // Text for the node
+    const [tagMaker, setTagMaker] = useState<boolean>(false); // Section to make new tags
+    const [tagColor, setTagColor] = useState<string>(""); // Color for the new tag
+    const [tagText, setTagText] = useState<string>(""); // Text for the new tag
+    const [selectedTags, setSelectedTags] = useState<string[][]>([]); // Selected tags to add to the node
+    const [mood, setMood] = useState<string>(node["mood"]); // Mood for the node
+    const [openFileUploader, setOpenFileUploader] = useState<boolean>(false); // File uploader for media
+    const [detailsText, setDetailsText] = useState<string>(node["details"]); // Details text for the node
+    const [detailsTextForm, setDetailsTextForm] = useState<boolean>(node["details"] === "" ? false : true); // Determines if the details text is shown or if text box is shown
+    const [newNodeValue, setNewNodeValue] = useState<string>(""); // New value for the node
+    const [file, setFile] = useState(null);
 
     const [session, setSession] = useState<Session | null>();
 
@@ -85,15 +96,13 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
             setSession(session);
           })
     }, [])
-    
-    
 
-    const fileTypes = ["JPG", "PNG", "GIF"];
-    const choiceToStyleMap = ["StyledNodeChoice", "StyledNodeResultGood", "StyledNodeResultMedium", "StyledNodeResultBad"]
-    const choiceToMoodMap = ["moodChoice", "moodGood", "moodMedium", "moodBad"]
+    const fileTypes = ["JPG", "PNG", "GIF"]; // File types for the file uploader
     
-    const [file, setFile] = useState(null);
-    
+    //! Node Functions
+
+
+    //? Function to handle file upload
     const handleFileUpload = async (file: Blob | MediaSource) => {
         setFile(file);
         console.log(file);
@@ -132,10 +141,12 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
         }
     };
 
-    const handleSelectChange = (e) => setChoice(parseInt(e.target.value)); // Changes value of choice based on option clicked on dropdown
+    //? Function to handle the node type dropdown
+    const handleSelectChange = (e) => setSelectedNodeType(e.target.value); // Changes value of choice based on option clicked on dropdown
 
+    //? Function to add a new node
     const addNode = async (pageId: number) => {
-        if (choice < 1) {
+        if (selectedNodeType == "") {
           alert('Select a valid option');
           return;
         }
@@ -143,8 +154,8 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
         const nodeToAdd: node = {
           value: nodeText,
           children: [],
-          nodeStyle: choiceToStyleMap[choice - 1],
-          moodStyle: choiceToMoodMap[choice - 1],
+          nodeStyle: selectedNodeType,
+          moodStyle: MoodStyle[selectedNodeType],
           mood: "",
           tags: selectedTags,
           details: "",
@@ -174,8 +185,9 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
         }
       
         console.log('Page updated successfully:', data);
-      };
+    };
 
+    //? Function to delete a node
     const deleteNodeNew = async (rootNode: node) => {
     
         for(let i = 0; i < rootNode.children.length; i++){
@@ -204,6 +216,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
         }
     };
 
+    //? Function to handle the right click on the emoji mood bar
     function handleMoodMenu(event) {
         //^ right click on emoji mood bar
         event.preventDefault(); // Prevent the default context menu from appearing
@@ -215,12 +228,14 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
         //setPages([...pages])
     }
 
+    //? Function to handle the right click on the node
     function handleManageNodeMenu(event) {
         //^ right click on Node to get manage node menu
         event.preventDefault(); // Prevent the default context menu from appearing
         onOpen();
     }
 
+    //? Function to add a new tag
     const addNewTag = async () => {
         setTags([...tags, [tagText, tagColor]])
         
@@ -241,6 +256,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
     }
     }
 
+    //? Function to select a tag to be added to node
     const selectTag = (tag) => {
         if(selectedTags.includes(tag) == false){
             setSelectedTags([...selectedTags, tag])
@@ -250,6 +266,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
         }
     }
 
+    //? Function to close the manage node modal
     const closeModal = () => {
         setNodeText("")
         setTagColor("")
@@ -259,6 +276,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
         onClose()
     }
 
+    //? Function to change nodes mood and update the database with new moods
     const handleMoodChange = async () => {
         node["mood"] = mood;
     
@@ -324,6 +342,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
         }
     };
 
+    //? Function to handle the details text change
     const handleDetailTextChange = async (pageId: number) => {
         // Update the node's details
         node["details"] = detailsText;
@@ -353,21 +372,54 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
         }
     };
 
+    //? Function to open the details text box
     const openDetailTextBox = () => {
         setDetailsText(node["details"]);
         setDetailsTextForm(false);
     };
 
+    //? Function to open the details page
     const openDetailsPage = () => {
         onOpenManage();
         node["details"] === "" ? setDetailsTextForm(false) : setDetailsTextForm(true);
     };
     
+    //? Function to close the details page
     const closeDetailsPage = () => {
         onCloseManage();
         setDetailsText("");
         setOpenFileUploader(false);
         setFile(null);
+    };
+
+    //? Function to update node text (value)
+    const handleNodeTextChange = async (e, pageId: number) => {
+        e.preventDefault();
+
+        node["value"] = newNodeValue;
+
+        const updatedPages = [...pages];
+        
+        setPages(updatedPages);
+
+        const updatedPage = updatedPages.find(page => page.id === pageId);
+      
+        if (updatedPage) {
+          // Update the page in Supabase
+          const { data, error } = await supabaseClient
+            .from('Pages')
+            .update({ node: updatedPage.node }) // Update the node structure in the database
+            .eq('id', pageId); // Ensure you're updating the correct page by its ID
+      
+          if (error) {
+            console.error('Error updating page details:', error);
+            return;
+          }
+      
+          console.log('Page details updated successfully:', data);
+        } else {
+          console.error('Page not found');
+        }
     };
 
 
@@ -413,13 +465,13 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
             <ModalBody>
                 <div className="flex flex-col gap-5">
                     <Select placeholder='Select Option' variant='filled' onChange={(e) => handleSelectChange(e)}>
-                        <option value={1}>Add Choice</option>
-                        <option value={2}>Add Good Result</option>
-                        <option value={3}>Add Mid Result</option>
-                        <option value={4}>Add Bad Result</option>
-                        {node["isRoot"] !== true ? <option value={5}>Delete Node</option> : null}
+                        <option value={NodeStyle.choiceNode}>Add Choice</option>
+                        <option value={NodeStyle.goodNode}>Add Good Result</option>
+                        <option value={NodeStyle.mediumNode}>Add Mid Result</option>
+                        <option value={NodeStyle.badNode}>Add Bad Result</option>
+                        {node["isRoot"] !== true ? <option value={"DeleteNode"}>Delete Node</option> : null}
                     </Select>
-                    {choice < 5 ? <div className='flex flex-col gap-5'><Input onChange={(e) => setNodeText(e.target.value)} placeholder='Node Text' />
+                    {selectedNodeType != "DeleteNode" ? <div className='flex flex-col gap-5'><Input onChange={(e) => setNodeText(e.target.value)} placeholder='Node Text' />
                     <div className="flex bg-gray-700 p-5 rounded-md gap-2 flex-wrap">
                     {tags.map((tag) => (
                         <Tag
@@ -490,10 +542,15 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
             <Modal isOpen={isOpenManage} onClose={closeDetailsPage}>
                 <ModalOverlay />
                 <ModalContent>
-                    <ModalHeader>Add Details</ModalHeader>
+                    <ModalHeader>Node Details</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
                         <div className="flex flex-col gap-5">
+                            <p>Edit Node Value</p>
+                            <form action="" onSubmit={(e) => handleNodeTextChange(e, pagePtr)}>
+                                <Input value={newNodeValue} onChange={(e) => setNewNodeValue(e.target.value)} placeholder='Edit Node Text' />
+                            </form>
+                            <div className="h-[1px] w-full bg-gray-400"></div>
                             {detailsTextForm === false ? <Textarea value={detailsText} onChange={(e) => setDetailsText(e.target.value)} placeholder='Enter Event Details' /> : <div className='mb-10 flex flex-wrap relative w-[95%]'><h1 className='font-semibold text-gray-700'>{node["details"]}</h1><p onClick={() => openDetailTextBox()} className='absolute top-0 right-[-20px] text-blue-400 text-2xl hover:cursor-pointer hover:text-blue-700'><FaPencilAlt /></p></div>}
                             <div className="flex w-full flex-wrap gap-2">
                             {node["tags"].map((tag) => (
@@ -516,7 +573,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods})
                         </div>
                     </ModalBody>
                     <ModalFooter>
-                        {/* Add the footer for your mood modal here */}
+                        {"Trife © 2024"}
                     </ModalFooter>
                 </ModalContent>
             </Modal>
