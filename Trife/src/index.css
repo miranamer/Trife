@@ -11,7 +11,7 @@
 }
 
 .StyledNodeNormal{
-  padding: 5px;
+  padding: 20px;
   border-radius: 8px;
   display: inline-block;
   text-align: center;
@@ -21,8 +21,12 @@
   font-weight: bold;
   position: relative;
   width: 180px;
-  height: 70px;
+  max-height: fit-content;
   transition: 300ms;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .StyledNodeNormal:hover{
@@ -36,7 +40,7 @@
 }
 
 .StyledNodeResultMedium{
-  padding: 5px;
+  padding: 20px;
   border-radius: 8px;
   display: inline-block;
   border: 2px solid #d6b04e;
@@ -45,8 +49,12 @@
   font-weight: bold;
   position: relative;
   width: 180px;
-  height: 70px;
+  max-height: fit-content;
   transition: 300ms;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .StyledNodeResultMedium:hover{
@@ -60,7 +68,7 @@
 }
 
 .StyledNodeResultGood{
-  padding: 5px;
+  padding: 20px;
   border-radius: 8px;
   display: inline-block;
   border: 2px solid #7ee695;
@@ -69,8 +77,12 @@
   font-weight: bold;
   position: relative;
   width: 180px;
-  height: 70px;
+  max-height: fit-content;
   transition: 300ms;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .StyledNodeResultGood:hover{
@@ -84,7 +96,7 @@
 }
 
 .StyledNodeResultBad{
-  padding: 5px;
+  padding: 20px;
   border-radius: 8px;
   display: inline-block;
   border: 2px solid #c25661;
@@ -93,8 +105,12 @@
   font-weight: bold;
   position: relative;
   width: 180px;
-  height: 70px;
+  max-height: fit-content;
   transition: 300ms;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .StyledNodeResultBad:hover{
@@ -108,7 +124,7 @@
 }
 
 .StyledNodeChoice{
-  padding: 5px;
+  padding: 20px;
   border-radius: 8px;
   display: inline-block;
   border: 2px solid #75a9d4;
@@ -117,8 +133,12 @@
   font-weight: bold;
   position: relative;
   width: 180px;
-  height: 70px;
+  max-height: fit-content;
   transition: 300ms;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .StyledNodeChoice:hover{
@@ -131,8 +151,8 @@
   background: #C6DEF1;
 }
 
-.StyledNodeFinances{
-  padding: 5px;
+.StyledNodeRetrospect{
+  padding: 20px;
   border-radius: 8px;
   display: inline-block;
   border: 2px solid #ee90c4;
@@ -141,7 +161,22 @@
   font-weight: bold;
   position: relative;
   width: 180px;
-  height: 70px;
+  max-height: fit-content;
+  transition: 300ms;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.StyledNodeRetrospect:hover {
+  box-shadow: 0 0 30px 10px #F2C6DE;
+  transition: 300ms;
+}
+
+.moodRetrospect {
+  border: 2px solid #ee90c4;
+  background: #F2C6DE;
 }
 
 .caretClass{

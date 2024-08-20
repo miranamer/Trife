@@ -42,8 +42,6 @@ import { usePageStore } from '../store/page-store';
 type NodeProps = {
     node: node;
     showTree: boolean;
-    pages: page[];
-    setPages: React.Dispatch<React.SetStateAction<page[]>>;
     tags: string[][];
     setTags: React.Dispatch<React.SetStateAction<string[][]>>;
     moods: string[];
@@ -54,12 +52,13 @@ enum NodeStyle{
     choiceNode = "StyledNodeChoice",
     goodNode = "StyledNodeResultGood",
     mediumNode = "StyledNodeResultMedium",
-    badNode = "StyledNodeResultBad"
+    badNode = "StyledNodeResultBad",
+    retrospectNode = "StyledNodeRetrospect"
 }
 
-const MoodStyle = {[NodeStyle.choiceNode]: "moodChoice", [NodeStyle.goodNode]: "moodGood", [NodeStyle.mediumNode]: "moodMedium", [NodeStyle.badNode]: "moodBad"}
+const MoodStyle = {[NodeStyle.choiceNode]: "moodChoice", [NodeStyle.goodNode]: "moodGood", [NodeStyle.mediumNode]: "moodMedium", [NodeStyle.badNode]: "moodBad", [NodeStyle.retrospectNode]: "moodRetrospect"}
 
-const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} : NodeProps) => {
+const Node = ({node, showTree, tags, setTags, moods, setMoods} : NodeProps) => {
 
     const { isOpen, onOpen, onClose } = useDisclosure() // Manage Node Modal
     const { isOpen: isOpenMood, onOpen: onOpenMood, onClose: onCloseMood } = useDisclosure() // Mood Modal
@@ -80,10 +79,12 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} 
 
     const [session, setSession] = useState<Session | null>();
 
-    const {pagePtr, setPagePtr} = usePageStore((state) => (
+    const {pagePtr, pages, setPagePtr, setPages} = usePageStore((state) => (
         {
-        pagePtr: state.pagePtr, 
-        setPagePtr: state.setPagePtr
+        pagePtr: state.pagePtr,
+        pages: state.pages,
+        setPagePtr: state.setPagePtr,
+        setPages: state.setPages
         }
       ));
 
@@ -105,7 +106,6 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} 
     //? Function to handle file upload
     const handleFileUpload = async (file: Blob | MediaSource) => {
         setFile(file);
-        console.log(file);
     
         const mediaItem = {
             original: URL.createObjectURL(file),
@@ -198,7 +198,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} 
 
                 const { data, error } = await supabaseClient
                 .from('Pages')
-                .update({ node: updatedPages.find(page => page.id == pagePtr).node }) // Update the node structure in the database
+                .update({ node: updatedPages.find(page => page.id == pagePtr)?.node }) // Update the node structure in the database
                 .eq('id', pagePtr); // Ensure you're updating the correct page by its ID
     
                 if (error) {
@@ -220,12 +220,9 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} 
     function handleMoodMenu(event) {
         //^ right click on emoji mood bar
         event.preventDefault(); // Prevent the default context menu from appearing
-        event.stopPropagation();
+        event.stopPropagation(); // Prevents event bubbling up to the parent element and activating default context menu
         setMood(node["mood"]);
         onOpenMood();
-        //^ Put emoji mood bar logic here -> open chakra ui modal to enter emoji
-        //node["mood"]s = [...node["mood"]s, "🎃"];
-        //setPages([...pages])
     }
 
     //? Function to handle the right click on the node
@@ -235,7 +232,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} 
         onOpen();
     }
 
-    //? Function to add a new tag
+    //? Function to make a new tag and add it to supabase db
     const addNewTag = async () => {
         setTags([...tags, [tagText, tagColor]])
         
@@ -284,7 +281,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} 
             alert("You're a wizard Harry");
         }
     
-        // Extract emoji sequences
+        // Extract emoji sequences from the mood string
         const emojiArray = Array.from(mood.match(emojiRegex()) || []);
         
         // Create a Set to store unique moods
@@ -299,7 +296,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} 
 
         const { dataPage, errorPage } = await supabaseClient
             .from('Pages')
-            .update(updatedPages.find(page => page.id == pagePtr)) // Update the node structure in the database
+            .update(updatedPages.find(page => page.id == pagePtr)) // Update the page so it has the new mood on its node
             .eq('id', pagePtr); // Ensure you're updating the correct page by its ID
       
           if (errorPage) {
@@ -322,7 +319,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} 
         // Extract existing moods into a Set
         const existingMoodsSet = new Set(existingMoods.map((entry) => entry.mood));
     
-        // Filter out moods that are already stored
+        // Find moods that are not stored in supabase table
         const newMoods = emojiArray.filter((mood) => !existingMoodsSet.has(mood));
     
         if (newMoods.length > 0) {
@@ -348,7 +345,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} 
         node["details"] = detailsText;
       
         // Update local state
-        setDetailsTextForm(true);
+        setDetailsTextForm(true); // show the detail text now not the text box
         setPages([ ...pages ]);
       
         // Find the page to update
@@ -469,6 +466,7 @@ const Node = ({node, showTree, pages, setPages, tags, setTags, moods, setMoods} 
                         <option value={NodeStyle.goodNode}>Add Good Result</option>
                         <option value={NodeStyle.mediumNode}>Add Mid Result</option>
                         <option value={NodeStyle.badNode}>Add Bad Result</option>
+                        <option value={NodeStyle.retrospectNode}>Add Retrospect Node</option>
                         {node["isRoot"] !== true ? <option value={"DeleteNode"}>Delete Node</option> : null}
                     </Select>
                     {selectedNodeType != "DeleteNode" ? <div className='flex flex-col gap-5'><Input onChange={(e) => setNodeText(e.target.value)} placeholder='Node Text' />

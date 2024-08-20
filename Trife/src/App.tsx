@@ -60,16 +60,18 @@ export const startNode: node = {
 
 function App() {
 
-  const {pagePtr, setPagePtr} = usePageStore((state) => (
+  const {pagePtr, pages, setPagePtr, setPages} = usePageStore((state) => (
     {
-    pagePtr: state.pagePtr, 
-    setPagePtr: state.setPagePtr
+    pagePtr: state.pagePtr,
+    pages: state.pages,
+    setPagePtr: state.setPagePtr,
+    setPages: state.setPages
     }
   ));
 
   useEffect(() => {
 
-      const fetchPages = async (userID) => {
+      const fetchPages = async (userID: string | undefined) => {
         const {data, error} = await supabaseClient
         .from('Pages')
         .select()
@@ -88,7 +90,7 @@ function App() {
         }
       }
 
-      const fetchTags = async (userID) => {
+      const fetchTags = async (userID: string | undefined) => {
         const {data, error} = await supabaseClient
         .from('Tags')
         .select()
@@ -108,7 +110,7 @@ function App() {
         }
       }
 
-      const fetchMoods = async (userID) => {
+      const fetchMoods = async (userID: string | undefined) => {
         const {data, error} = await supabaseClient
         .from('Moods')
         .select()
@@ -146,8 +148,8 @@ function App() {
 
   }, [])
 
-  const [pages, setPages] = useState<page[]>([]); // Array of all pages (entries)
-  const [tags, setTags] = useState<string[][]>([]) // Tags Array -> [tagTitle, tagColor]
+  //? Take tags and moods from Zustand store as well like pages[] and pagePtr
+  const [tags, setTags] = useState<string[][]>([]) // Tags Array -> [[tagTitle, tagColor]]
   const [moods, setMoods] = useState<string[]>([]); // All Used Moods
 
   const [session, setSession] = useState<Session | null>();
@@ -155,7 +157,7 @@ function App() {
   const showTree = (node: node) => { // Recursively draws all nodes by taking in root node as Node itself calls showTree on all children
     return (
       <>
-        <Node node={node} showTree={showTree} pages={pages} setPages={setPages} tags={tags} setTags={setTags} moods={moods} setMoods={setMoods} />
+        <Node node={node} showTree={showTree} tags={tags} setTags={setTags} moods={moods} setMoods={setMoods} />
       </>
     );
   };
@@ -168,7 +170,7 @@ function App() {
             <Routes>
               <Route path='/signup' element={<SignUp />} />
               <Route path='/login' element={<Login />} />
-              <Route path='/' element={<ProtectedRoute><MainPage pages={pages} setPages={setPages} showTree={showTree} tags={tags} moods={moods} /></ProtectedRoute>} />
+              <Route path='/' element={<ProtectedRoute><MainPage showTree={showTree} tags={tags} moods={moods} /></ProtectedRoute>} />
             </Routes>
           </AuthProvider>
         </ChakraProvider>

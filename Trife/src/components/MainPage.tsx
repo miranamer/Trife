@@ -3,7 +3,7 @@ import { Tree } from "react-organizational-chart";
 import DayBar from "./DayBar";
 import { Tag, TagLabel, TagCloseButton, Textarea } from "@chakra-ui/react";
 import { IoIosArrowDropdown, IoIosArrowDropup, IoMdHelp } from "react-icons/io";
-import { IoMenu, IoSettingsSharp, IoHome, IoLogOut } from "react-icons/io5";
+import { IoMenu, IoSettingsSharp, IoHome, IoLogOut, IoSparkles } from "react-icons/io5";
 import {
   FaPlus,
   FaCalendarAlt,
@@ -73,9 +73,7 @@ import SquareTooltipButton from "./SquareTooltipButton.tsx";
 //* Make dayBar's ordered based on date not just reversed order of arr [DONE]
 
 type MainPageProps = {
-  pages: page[];
   showTree: JSX.Element;
-  setPages: React.Dispatch<React.SetStateAction<page[]>>;
   tags: string[][];
   moods: string[];
 };
@@ -84,9 +82,7 @@ type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 const MainPage = ({
-  pages,
   showTree,
-  setPages,
   tags,
   moods,
 }: MainPageProps) => {
@@ -104,33 +100,37 @@ const MainPage = ({
 
   const [selectedFilter, setSelectedFilter] = useState<string>(""); // "tag", "mood", etc -> determines what filter menu to open
   const [selectedFilters, setSelectedFilters] = useState([]); // STORES ALL FILTERS (TAGS, MOODS, ETC)
-  const [menuOpen, setMenuOpen] = useState<boolean>(false);
-  const [searchText, setSearchText] = useState<string>("");
-  const [filteredArray, setFilteredArray] = useState([]); // if searchText != "" and or filters present
-  const [showFilteredArray, setShowFilteredArray] = useState<boolean>(false);
-  const [pageTitle, setPageTitle] = useState<string>("");
-  const [pageDetails, setPageDetails] = useState<string>("");
-  const [calendarDate, setCalendarDate] = useState<Value>(new Date());
-  const [calendarOpen, setCalendarOpen] = useState<boolean>(false);
-  const [dateToAdd, setDateToAdd] = useState<string | null>(null);
-  const [treeView, setTreeView] = useState<boolean>(true);
-  const [filteredMonths, setFilteredMonths] = useState([]);
-  const [showFilteredMonths, setShowFilteredMonths] = useState(false);
-  const [chainView, setChainView] = useState(false);
-  const [currFilteredMonth, setCurrFilteredMonth] = useState("");
-  const [session, setSession] = useState<Session | null>();
+  const [menuOpen, setMenuOpen] = useState<boolean>(false); // determines if tag, mood dropdown menu is open
+  const [searchText, setSearchText] = useState<string>(""); // search text input
+  const [filteredArray, setFilteredArray] = useState([]); // array of pages that match search text and filters
+  const [showFilteredArray, setShowFilteredArray] = useState<boolean>(false); // determines if filteredArray should be shown
+  const [pageTitle, setPageTitle] = useState<string>(""); // title of page to add
+  const [pageDetails, setPageDetails] = useState<string>(""); // details of page to add
+  const [calendarDate, setCalendarDate] = useState<Value>(new Date()); // date selected from calendar
+  const [calendarOpen, setCalendarOpen] = useState<boolean>(false); // determines if calendar is open
+  const [dateToAdd, setDateToAdd] = useState<string | null>(null); // date to add page to
+  const [treeView, setTreeView] = useState<boolean>(true); // determines if tree view is shown
+  const [filteredMonths, setFilteredMonths] = useState([]); // stores pages filtered by month
+  const [showFilteredMonths, setShowFilteredMonths] = useState(false); // determines if filteredMonths should be shown
+  const [chainView, setChainView] = useState(false); // determines if chain view is shown
+  const [currFilteredMonth, setCurrFilteredMonth] = useState(""); // stores month/year selected from calender
+  const [session, setSession] = useState<Session | null>(); // supabase session creds
 
-  const { pagePtr, setPagePtr } = usePageStore((state) => ({
+  const {pagePtr, pages, setPagePtr, setPages} = usePageStore((state) => (
+    {
     pagePtr: state.pagePtr,
+    pages: state.pages,
     setPagePtr: state.setPagePtr,
-  }));
+    setPages: state.setPages
+    }
+  ));
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen, onOpen, onClose } = useDisclosure(); // modal to add new page
   const {
     isOpen: isOpenDrawer,
     onOpen: onOpenDrawer,
     onClose: onCloseDrawer,
-  } = useDisclosure();
+  } = useDisclosure(); // sidebar to show user options
 
   const toast = useToast();
 
@@ -281,7 +281,7 @@ const MainPage = ({
   };
 
   //^ recursively traverses nodes to find searchText parameter in trees
-  const traverseTree_SearchText = (searchText: string, node: node) => {
+  const traverseTreeSearchText = (searchText: string, node: node) => {
     searchText = searchText.toLowerCase();
 
     const lowercaseValue = node["value"].toLowerCase();
@@ -295,7 +295,7 @@ const MainPage = ({
     }
 
     for (let i = 0; i < node["children"].length; i++) {
-      if (traverseTree_SearchText(searchText, node["children"][i])) {
+      if (traverseTreeSearchText(searchText, node["children"][i])) {
         return true;
       }
     }
@@ -304,7 +304,7 @@ const MainPage = ({
   };
 
   //^ recursively traverses nodes to find if they contain any of the selected filters (tags, moods)
-  const traverseTree_Filters = (filters: any[], node: node) => {
+  const traverseTreeFilters = (filters: any[], node: node) => {
     for (let i = 0; i < filters.length; i++) {
       const currFilter = filters[i];
 
@@ -327,7 +327,7 @@ const MainPage = ({
     }
 
     for (let i = 0; i < node["children"].length; i++) {
-      if (traverseTree_Filters(filters, node["children"][i])) {
+      if (traverseTreeFilters(filters, node["children"][i])) {
         return true;
       }
     }
@@ -349,7 +349,7 @@ const MainPage = ({
       for (let i = 0; i < pages.length; i++) {
         const currTree = pages[i]["node"];
         if (
-          traverseTree_SearchText(searchText.toLowerCase(), currTree) ||
+          traverseTreeSearchText(searchText.toLowerCase(), currTree) ||
           pages[i]["title"].toLowerCase().includes(searchText.toLowerCase()) ||
           pages[i]["details"].toLowerCase().includes(searchText.toLowerCase())
         ) {
@@ -364,8 +364,8 @@ const MainPage = ({
         const currTree = pages[i]["node"];
 
         if (
-          traverseTree_Filters(selectedFilters, currTree) === true &&
-          (traverseTree_SearchText(searchText.toLowerCase(), currTree) ||
+          traverseTreeFilters(selectedFilters, currTree) === true &&
+          (traverseTreeSearchText(searchText.toLowerCase(), currTree) ||
             pages[i]["title"]
               .toLowerCase()
               .includes(searchText.toLowerCase()) ||
@@ -383,7 +383,7 @@ const MainPage = ({
       //? No Search Text + Filters Present
       for (let i = 0; i < pages.length; i++) {
         const currTree = pages[i]["node"];
-        if (traverseTree_Filters(selectedFilters, currTree)) {
+        if (traverseTreeFilters(selectedFilters, currTree)) {
           filteredDays.push(pages[i]);
         }
       }
@@ -798,18 +798,24 @@ const MainPage = ({
           <DrawerBody>
             <div className="flex flex-col gap-5">
               <Button
-                onClick={() => LogOut()}
-                leftIcon={<IoLogOut />}
-                colorScheme="red"
+                leftIcon={<IoSparkles />}
+                colorScheme="orange"
               >
-                Log Out
+                AI Advice
               </Button>
               <Button
                 leftIcon={<IoSettingsSharp />}
                 colorScheme="blue"
-                variant="outline"
               >
                 Settings
+              </Button>
+              <Button
+                onClick={() => LogOut()}
+                leftIcon={<IoLogOut />}
+                colorScheme="red"
+                variant="outline"
+              >
+                Log Out
               </Button>
             </div>
           </DrawerBody>
