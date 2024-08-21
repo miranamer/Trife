@@ -34,6 +34,8 @@ import {
   import type { node, page } from '../App';
 import { supabaseClient } from '../config/supabase-client';
 import { Session } from '@supabase/supabase-js';
+import {v4 as uuidv4} from 'uuid';
+import { MdDeleteForever } from "react-icons/md";
 
 //store
 import { usePageStore } from '../store/page-store';
@@ -102,14 +104,89 @@ const Node = ({node, showTree, tags, setTags, moods, setMoods} : NodeProps) => {
     
     //! Node Functions
 
+    //? Function to delete an image from the node's image gallery
+    const handleDeleteImage = async (id) => {
+        const imageURL = node.media.find((image) => image.id === id).original;
+        const fullFilePath = imageURL.split('node-media/')[1];
+
+        const updatedMedia = node.media.filter((image) => image.id !== id);
+        node["media"] = updatedMedia;
+        
+        const updatedPages = [...pages];
+        setPages(updatedPages);
+
+        try {
+            // Delete the image from Supabase storage
+            const { error } = await supabaseClient.storage
+              .from('node-media')
+              .remove([fullFilePath]);
+        
+            if (error) throw error;
+        
+            alert('Image deleted successfully!');
+          } catch (error) {
+            alert('Error deleting image: ' + error.message);
+          }
+
+        
+        const updatedPage = updatedPages.find((page) => page.id === pagePtr);
+
+        console.log(updatedPage);
+
+        
+        const { data, error: pageError } = await supabaseClient
+        .from('Pages')
+        .update({ node: updatedPage.node })
+        .eq('id', pagePtr);
+
+        if (pageError) {
+            console.error('Error updating page details:', pageError);
+            return;
+        }
+    }
+
+    //? Function to render the images in the image gallery with a delete button
+    const renderImageWithDeleteButton = (item) => {
+        return (
+          <div style={{ position: 'relative' }}>
+            <img src={item.original} alt="" style={{ width: '100%' }} />
+            <MdDeleteForever
+              onClick={() => handleDeleteImage(item.id)}
+              className='absolute top-2 right-2 text-red-500 hover:cursor-pointer text-4xl'
+            >
+              X
+            </MdDeleteForever>
+          </div>
+        );
+    };
 
     //? Function to handle file upload
-    const handleFileUpload = async (file: Blob | MediaSource) => {
+    const handleFileUpload = async (file) => {
         setFile(file);
+
+        const fileName = `${session?.user.id}/${uuidv4()}`
+
+        const {data, error} = await supabaseClient
+        .storage
+        .from('node-media')
+        .upload(fileName, file);
+
+        if (error) throw error;
+
+        const { data: fetchedImage } = supabaseClient.storage
+        .from('node-media') // Replace 'images' with your bucket name
+        .getPublicUrl(fileName); // filePath is the path used in the upload
+
+        console.log(fetchedImage)
+
+        
+        const supabaseImageURL = fetchedImage.publicUrl;
+
     
         const mediaItem = {
-            original: URL.createObjectURL(file),
-            thumbnail: URL.createObjectURL(file),
+            original: supabaseImageURL,
+            thumbnail: supabaseImageURL,
+            id: node.media.length
         };
     
         // Add the media item to the node
@@ -563,9 +640,9 @@ const Node = ({node, showTree, tags, setTags, moods, setMoods} : NodeProps) => {
                             ))}
                             </div>
                             {detailsTextForm === false ? <Button onClick={() => handleDetailTextChange(pagePtr)} colorScheme='green' variant="outline">Update Details</Button> : null}
-                            <div className="flex items-center justify-center">
-                                <ImageGallery items={node["media"]} />;
-                            </div>
+                            {node["media"].length > 0 ? <div className="flex items-center justify-center">
+                                <ImageGallery renderItem={renderImageWithDeleteButton} items={node["media"]} />;
+                            </div> : null}
                             {openFileUploader ? <FileUploader handleChange={handleFileUpload} name="file" types={fileTypes} /> : null}
                             <Button onClick={() => setOpenFileUploader(!openFileUploader)} colorScheme='yellow'>Add Media</Button>
                         </div>

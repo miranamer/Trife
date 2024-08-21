@@ -54,6 +54,7 @@ export const startNode: node = {
     {
     original: "https://picsum.photos/id/1018/1000/600/",
     thumbnail: "https://picsum.photos/id/1018/250/150/",
+    id: 0
   }
 ],
 }
@@ -121,7 +122,6 @@ function App() {
         }
 
         if(data){
-            console.log('Moods', data);
             let formattedMoods = [];
 
             for(let i = 0; i < data.length; i++){
