@@ -583,7 +583,6 @@ const MainPage = ({
 
           {pagePtr != -1 ?
           <>
-            <SquareTooltipButton label="Enlarge" toolTipBg="#746C59" toolTipTextColor="#EEE1BF" onClickFunction={() => null} buttonBg="#EEE1BF" buttonTextColor="#746C59" Icon={ImEnlarge2} />
             <SquareTooltipButton label="Chain View" toolTipBg="#746C59" toolTipTextColor="#EEE1BF" onClickFunction={() => setChainView(!chainView)} buttonBg="#EEE1BF" buttonTextColor="#746C59" Icon={FaLink} />
           </>
            : null}

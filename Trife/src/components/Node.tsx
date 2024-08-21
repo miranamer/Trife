@@ -397,7 +397,7 @@ const Node = ({node, showTree, tags, setTags, moods, setMoods} : NodeProps) => {
         const existingMoodsSet = new Set(existingMoods.map((entry) => entry.mood));
     
         // Find moods that are not stored in supabase table
-        const newMoods = emojiArray.filter((mood) => !existingMoodsSet.has(mood));
+        const newMoods = uniqueMoodsArray.filter((mood) => !existingMoodsSet.has(mood));
     
         if (newMoods.length > 0) {
             // Insert new moods into Supabase

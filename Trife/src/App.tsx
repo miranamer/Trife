@@ -10,7 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './hooks/Auth';
 import { supabaseClient } from './config/supabase-client';
 import { Session } from '@supabase/supabase-js';
-import emojiRegex from 'emoji-regex';
+import LandingPage from './pages/LandingPage';
 
 //util functions
 import { orderDatesDescending } from './utils/utils';
@@ -168,6 +168,7 @@ function App() {
         <ChakraProvider>
           <AuthProvider>
             <Routes>
+              <Route path='/home' element={<LandingPage />} />
               <Route path='/signup' element={<SignUp />} />
               <Route path='/login' element={<Login />} />
               <Route path='/' element={<ProtectedRoute><MainPage showTree={showTree} tags={tags} moods={moods} /></ProtectedRoute>} />
