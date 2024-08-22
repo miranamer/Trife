@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { page } from "../App";
 
-const TextView = ({ page, selectedDayBar }) => {
-  const [allMoods, setAllMoods] = useState([]);
+type TextViewProps = {
+  page: page;
+  selectedDayBar: number;
+}
+
+const TextView = ({ page, selectedDayBar } : TextViewProps) => {
+  const [allMoods, setAllMoods] = useState([]); // bring moods in from zustand
 
   const getAllMoods = (node, arr) => {
     const currMood = node.mood;

@@ -1,7 +1,13 @@
 import React from 'react'
 import { Tree } from 'react-organizational-chart'
+import { page, node } from '../App'
 
-const ChainViewTree = ({page, showTree}) => {
+type ChainViewTreeProps = {
+  page: page;
+  showTree: (node: node) => React.ReactNode;
+}
+
+const ChainViewTree = ({page, showTree} : ChainViewTreeProps) => {
   return (
     <div className='flex flex-col gap-10 items-center justify-center'>
         <h1 className="font-bold text-xl text-[#746C59]">{page.date}</h1>

@@ -2,9 +2,14 @@ import React from 'react'
 import type { page } from '../App';
 
 //! Add pencil icon to right of DayBar to allow editing of Title for that day
-//! Add Title parameter to pages to allow Titles for each day -> On click of + button to add new day, make modal for Title
 
-const DayBar = ({page, highlighted}) => {
+type DayBarProps = {
+    page: page,
+    highlighted: boolean
+};
+
+
+const DayBar = ({page, highlighted} : DayBarProps) => {
     const dateToMonthMap = {'01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Aug', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec'}; // Do these
     //bg-gradient-to-b from-[#F1E8D7] to-[#e3d9c0]
   return (

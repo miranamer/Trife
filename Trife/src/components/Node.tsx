@@ -30,7 +30,6 @@ import {
   import ImageGallery from "react-image-gallery";
   import "react-image-gallery/styles/css/image-gallery.css";
   import { FileUploader } from "react-drag-drop-files";
-  import emojiRegex from 'emoji-regex';
   import type { node, page } from '../App';
 import { supabaseClient } from '../config/supabase-client';
 import { Session } from '@supabase/supabase-js';
@@ -39,6 +38,9 @@ import { MdDeleteForever } from "react-icons/md";
 
 //store
 import { usePageStore } from '../store/page-store';
+
+//utils
+import { extractEmojis } from '../utils/utils';
 
 
 type NodeProps = {
@@ -357,17 +359,15 @@ const Node = ({node, showTree, tags, setTags, moods, setMoods} : NodeProps) => {
         if (mood === "🪄🪄🪄") {
             alert("You're a wizard Harry");
         }
-    
-        // Extract emoji sequences from the mood string
-        const emojiArray = Array.from(mood.match(emojiRegex()) || []);
-        
-        // Create a Set to store unique moods
-        const uniqueMoodsSet = new Set([...moods, ...emojiArray]);
-        const uniqueMoodsArray = Array.from(uniqueMoodsSet).filter(char => char !== "");
+
+        const uniqueEmojisInString: string[] = Array.from(new Set (extractEmojis(mood)));
+
+        const newEmojis = uniqueEmojisInString.filter((emoji) => !moods.includes(emoji));
     
         // Update local state
-        setMoods(uniqueMoodsArray);
-        let updatedPages = [...pages]
+        setMoods([...moods, ...newEmojis]);
+        
+        const updatedPages = [...pages]
         setPages(updatedPages);
 
 
@@ -382,28 +382,11 @@ const Node = ({node, showTree, tags, setTags, moods, setMoods} : NodeProps) => {
           }
 
     
-        // Fetch existing moods for the user from Supabase
-        const { data: existingMoods, error } = await supabaseClient
-            .from('Moods')
-            .select('mood')
-            .eq('userID', session?.user.id);
-    
-        if (error) {
-            console.error('Error fetching existing moods:', error);
-            return;
-        }
-    
-        // Extract existing moods into a Set
-        const existingMoodsSet = new Set(existingMoods.map((entry) => entry.mood));
-    
-        // Find moods that are not stored in supabase table
-        const newMoods = uniqueMoodsArray.filter((mood) => !existingMoodsSet.has(mood));
-    
-        if (newMoods.length > 0) {
-            // Insert new moods into Supabase
+        if (newEmojis.length > 0) {
+            // Insert new mood emojis into Supabase
             const { error: insertError } = await supabaseClient
                 .from('Moods')
-                .insert(newMoods.map((mood) => ({
+                .insert(newEmojis.map((mood) => ({
                     mood: mood,
                     userID: session?.user.id,
                 })));
