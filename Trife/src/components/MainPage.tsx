@@ -57,6 +57,7 @@ import { usePageStore } from "../store/page-store.ts";
 import SearchBar from "./SearchBar";
 import SearchBarDropDown from "./SearchBarDropDown.tsx";
 import SquareTooltipButton from "./SquareTooltipButton.tsx";
+import AiAdviceBox from "./AiAdviceBox.tsx";
 
 //! Add New Node Type -> Retrospect. To show what you would have done differently in retrospect and how it could / would have gone
 //! Find way to truncate tree so it does not go past page width and height in non-expanded tree view
@@ -115,6 +116,7 @@ const MainPage = ({
   const [chainView, setChainView] = useState(false); // determines if chain view is shown
   const [currFilteredMonth, setCurrFilteredMonth] = useState(""); // stores month/year selected from calender
   const [session, setSession] = useState<Session | null>(); // supabase session creds
+  const [aiResponse, setAiResponse] = useState<string>("");
 
   const {pagePtr, pages, setPagePtr, setPages} = usePageStore((state) => (
     {
@@ -636,6 +638,27 @@ const MainPage = ({
     if (error) throw error;
   };
 
+  const getAiResponse = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/generateAiAdvice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ prompt: `${JSON.stringify(pages)}` })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      setAiResponse(data["response"]);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   return (
     <>
       <div className="bg-[#F1E8D7] w-full h-screen p-5 font-dmMono">
@@ -799,9 +822,14 @@ const MainPage = ({
               <Button
                 leftIcon={<IoSparkles />}
                 colorScheme="orange"
+                onClick={() => getAiResponse()}
               >
                 AI Advice
               </Button>
+
+              {aiResponse != "" ? <AiAdviceBox responseText={aiResponse} setAiResponse={setAiResponse} /> : null}
+
+
               <Button
                 leftIcon={<IoSettingsSharp />}
                 colorScheme="blue"
