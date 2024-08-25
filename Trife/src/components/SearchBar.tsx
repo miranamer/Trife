@@ -11,7 +11,7 @@ type SearchBarProps = {
 
 const SearchBar = ({searchText, setSearchText, searchForDays, menuOpen, setMenuOpen}: SearchBarProps) => {
   return (
-    <div className="relative bg-[#FAF6EC] w-full h-[100px] border-[#746C59] border-[2px] flex items-center p-3 rounded-md font-bold">
+    <div className="relative shadow-lg bg-[#FAF6EC] w-full h-[100px] border-[#746C59] border-[2px] flex items-center p-3 rounded-md font-bold">
         <form className="w-full" onSubmit={(e) => searchForDays(e)}>
             <input
                 value={searchText}

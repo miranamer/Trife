@@ -41,6 +41,7 @@ import Calendar from "react-calendar";
 import TextView from "./TextView";
 import { node, page, startNode } from "../App.tsx";
 import ChainViewTree from "./ChainViewTree.tsx";
+import MoonLoader from "react-spinners/MoonLoader";
 
 import newDayAddedSoundEffect from "../assets/dayAddedSoundEffect.mp3";
 import dayBarClickedSoundEffect from "../assets/dayBarClickedSoundEffect.mp3";
@@ -117,6 +118,7 @@ const MainPage = ({
   const [currFilteredMonth, setCurrFilteredMonth] = useState(""); // stores month/year selected from calender
   const [session, setSession] = useState<Session | null>(); // supabase session creds
   const [aiResponse, setAiResponse] = useState<string>("");
+  const [aiResponseLoading, setAiResponseLoading] = useState<boolean>(false);
 
   const {pagePtr, pages, setPagePtr, setPages} = usePageStore((state) => (
     {
@@ -133,6 +135,7 @@ const MainPage = ({
     onOpen: onOpenDrawer,
     onClose: onCloseDrawer,
   } = useDisclosure(); // sidebar to show user options
+  const {isOpen: isOpenAiModal, onOpen: onOpenAiModal, onClose: onCloseAiModal} = useDisclosure(); // modal to show AI advice
 
   const toast = useToast();
 
@@ -485,8 +488,7 @@ const MainPage = ({
       return null;
     }
     if (showFilteredArray && showFilteredMonths) {
-      return;
-      getArrayIntersection(filteredArray, filteredMonths).map((page) => (
+      return getArrayIntersection(filteredArray, filteredMonths).map((page) => (
         <div
           key={page["id"]}
           onClick={() => {
@@ -638,7 +640,9 @@ const MainPage = ({
     if (error) throw error;
   };
 
+  //^ gets response from LLM Model
   const getAiResponse = async () => {
+    setAiResponseLoading(true);
     try {
       const response = await fetch('http://localhost:5000/generateAiAdvice', {
         method: 'POST',
@@ -653,7 +657,9 @@ const MainPage = ({
       }
   
       const data = await response.json();
+      setAiResponseLoading(false);
       setAiResponse(data["response"]);
+      onOpenAiModal();
     } catch (error) {
       console.error('Error:', error);
     }
@@ -699,7 +705,7 @@ const MainPage = ({
               />
             ) : null}
 
-            <div className="relative rounded-md overflow-scroll no-scrollbar bg-[#FAF6EC] h-full border-[#746C59] border-[2px] flex flex-col gap-3 p-3 text-[#746C59]">
+            <div className="relative rounded-md overflow-scroll no-scrollbar shadow-lg bg-[#FAF6EC] h-full border-[#746C59] border-[2px] flex flex-col gap-3 p-3 text-[#746C59]">
               <div className="flex items-center justify-between">
                 <div
                   onClick={onOpen}
@@ -757,7 +763,7 @@ const MainPage = ({
           </div>
 
           <div
-            className={`relative flex flex-col w-[50%] h-[95vh] mt-4 ${
+            className={`relative shadow-lg flex flex-col w-[50%] h-[95vh] mt-4 ${
               treeView === true ? "treeViewBG" : "bg-[#FAF6EC]"
             } rounded-md border-[#746C59] border-[2px] p-2 overflow-scroll no-scrollbar`}
           >
@@ -820,11 +826,11 @@ const MainPage = ({
           <DrawerBody>
             <div className="flex flex-col gap-5">
               <Button
-                leftIcon={<IoSparkles />}
+                leftIcon={aiResponseLoading === false ? <IoSparkles /> : null}
                 colorScheme="orange"
                 onClick={() => getAiResponse()}
               >
-                AI Advice
+                {aiResponseLoading === false ? "AI Advice" : <MoonLoader size={20} loading={aiResponseLoading} color={"white"} />}
               </Button>
 
               {aiResponse != "" ? <AiAdviceBox responseText={aiResponse} setAiResponse={setAiResponse} /> : null}
@@ -854,6 +860,21 @@ const MainPage = ({
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      <Modal isOpen={isOpenAiModal} onClose={onCloseAiModal} size={"full"}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>
+            AI Advice
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <div className="flex p-2 flex-wrap overflow-auto w-full h-auto border-2 border-slate-200">
+              <p>{aiResponse}</p>
+            </div>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </>
   );
 };

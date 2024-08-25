@@ -1,6 +1,7 @@
 import {React, useEffect, useState} from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabaseClient } from '../config/supabase-client';
+import { useToast } from '@chakra-ui/react';
 
 const Login = () => {
 
@@ -8,6 +9,7 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const toast = useToast()
 
     const[session, setSession] = useState<Session | null>();
 
@@ -17,8 +19,12 @@ const Login = () => {
         const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
         if (error) {
-            setError(error.message);
-            console.log(error.message);
+            toast({
+                title: `Login Error: ${error.message}`,
+                status: "error",
+                isClosable: true,
+                position: "top"
+              })
         } else {
             navigate('/'); // Redirect to your dashboard or home page
         }
@@ -33,22 +39,6 @@ const Login = () => {
         supabaseClient.auth.onAuthStateChange((_event, session) => {
         setSession(session)
         })
-
-        const fetchTest = async () => {
-            const {data, error} = await supabaseClient
-            .from('Pages')
-            .select()
-
-            if(error){
-                console.log(error);
-            }
-
-            if(data){
-                console.log(data);
-            }
-        }
-
-        //fetchTest()
     }, [])
 
     return (

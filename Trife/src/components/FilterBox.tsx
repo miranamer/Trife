@@ -21,7 +21,7 @@ const FilterBox = ({isTagFilter,isMoodFilter,tags,moods,selectedFilters,addSelec
 
   return (
     <>
-      <div class="bg-[#FAF6EC] w-[100%] h-[150px] border-[#746C59] border-[2px] flex p-3 rounded-md relative">
+      <div class="bg-[#FAF6EC] shadow-lg w-[100%] h-[150px] border-[#746C59] border-[2px] flex p-3 rounded-md relative">
         <div class="flex flex-col gap-5">
           <h1 class="text-[#746C59] text-2xl">
             Filter By {isTagFilter ? "Tag" : "Mood"}
