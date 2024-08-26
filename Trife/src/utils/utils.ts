@@ -11,3 +11,25 @@ export function extractEmojis(text: string): string[] {
     const emojiRegex = /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/gu; // finds emojis in string
     return text.match(emojiRegex) || []; // returns array of emojis
 }
+
+export function getArrayIntersection<T>(arr1: T[], arr2: T[]): T[] {
+    // Convert arrays to sets to remove duplicates
+    const set1 = new Set(arr1);
+    const set2 = new Set(arr2);
+
+    return [...set1].filter((value) => set2.has(value));
+}
+
+//^ converts date object to correct format with zero padding
+export const convertDateFormat = (date: Date): string => {
+    const yyyy = date.getFullYear();
+    let mm = date.getMonth() + 1; // Months start at 0!
+    let dd = date.getDate();
+
+    if (dd < 10) dd = "0" + dd; // adding zero padding
+    if (mm < 10) mm = "0" + mm; // adding zero padding
+
+    const formattedToday = dd + "/" + mm + "/" + yyyy;
+
+    return formattedToday;
+  };

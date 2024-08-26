@@ -51,7 +51,7 @@ import { supabaseClient } from "../config/supabase-client";
 import { Session } from "@supabase/supabase-js";
 
 //utils
-import { orderDatesDescending } from "../utils/utils.ts";
+import { orderDatesDescending, getArrayIntersection, convertDateFormat } from "../utils/utils.ts";
 
 //store
 import { usePageStore } from "../store/page-store.ts";
@@ -494,20 +494,6 @@ const MainPage = ({
     }
   }
 
-  //^ converts date object to correct format with zero padding
-  const convertDateFormat = (date: Date) => {
-    const yyyy = date.getFullYear();
-    let mm = date.getMonth() + 1; // Months start at 0!
-    let dd = date.getDate();
-
-    if (dd < 10) dd = "0" + dd; // adding zero padding
-    if (mm < 10) mm = "0" + mm; // adding zero padding
-
-    const formattedToday = dd + "/" + mm + "/" + yyyy;
-
-    return formattedToday;
-  };
-
   //^ called when clicking on a date from the calender. If no page w/ that date exists, modal to add it opens else that page is selected.
   const addPageWithCalendar = (date: Date) => {
     const formattedToday = convertDateFormat(date);
@@ -549,23 +535,6 @@ const MainPage = ({
     onClose();
   };
 
-  //^ gets intersection of 2 arrays
-  function getArrayIntersection(arr1: any[], arr2: any[]) {
-    // Convert arrays to sets to remove duplicates
-    const set1 = new Set(arr1);
-    const set2 = new Set(arr2);
-
-    // Create an intersection set by filtering elements present in both sets
-    const intersectionSet = new Set(
-      [...set1].filter((value) => set2.has(value))
-    );
-
-    // Convert the intersection set back to an array
-    const intersectionArray = Array.from(intersectionSet);
-
-    return intersectionArray;
-  }
-
   //^ removes any selected month/year filter
   const removeMonthFilter = () => {
     setFilteredMonths([]);
@@ -584,7 +553,7 @@ const MainPage = ({
       return null;
     }
     if (showFilteredArray && showFilteredMonths) {
-      return getArrayIntersection(filteredArray, filteredMonths).map((page) => (
+      return getArrayIntersection<page>(filteredArray, filteredMonths).map((page) => (
         <div
           key={page["id"]}
           onClick={() => {
@@ -645,11 +614,11 @@ const MainPage = ({
     }
 
     if (showFilteredArray && showFilteredMonths) {
-      return;
-      getArrayIntersection(filteredArray, filteredMonths).map((page) => (
+      return getArrayIntersection<page>(filteredArray, filteredMonths).map((page) => (
         <ChainViewTree page={page} showTree={showTree} />
       ));
-    } else {
+    } 
+    else {
       if (showFilteredArray) {
         return filteredArray.map((page) => (
           <ChainViewTree page={page} showTree={showTree} />
@@ -660,7 +629,8 @@ const MainPage = ({
         return filteredMonths.map((page) => (
           <ChainViewTree page={page} showTree={showTree} />
         ));
-      } else {
+      } 
+      else {
         return pages.map((page) => (
           <ChainViewTree page={page} showTree={showTree} />
         ));
