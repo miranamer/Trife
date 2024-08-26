@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Tree } from "react-organizational-chart";
 import DayBar from "./DayBar";
 import { Tag, TagLabel, TagCloseButton, Textarea } from "@chakra-ui/react";
-import { IoIosArrowDropdown, IoIosArrowDropup, IoMdHelp } from "react-icons/io";
 import { IoMenu, IoSettingsSharp, IoHome, IoLogOut, IoSparkles } from "react-icons/io5";
 import {
   FaPlus,
@@ -10,6 +9,7 @@ import {
   FaUser,
   FaShoppingBasket,
   FaLink,
+  FaFilter
 } from "react-icons/fa";
 import {
   Modal,
@@ -119,6 +119,7 @@ const MainPage = ({
   const [session, setSession] = useState<Session | null>(); // supabase session creds
   const [aiResponse, setAiResponse] = useState<string>("");
   const [aiResponseLoading, setAiResponseLoading] = useState<boolean>(false);
+  const [andFiltering, setAndFiltering] = useState<boolean>(false);
 
   const {pagePtr, pages, setPagePtr, setPages} = usePageStore((state) => (
     {
@@ -313,21 +314,18 @@ const MainPage = ({
     for (let i = 0; i < filters.length; i++) {
       const currFilter = filters[i];
 
-      for (let i = 0; i < node["tags"].length; i++) {
+      for (let j = 0; j < node["tags"].length; j++) {
         // Checking if any tags on current node == currFilter (which may be a tag or mood)
         if (
-          node["tags"][i][0] == currFilter[0] &&
-          node["tags"][i][1] == currFilter[1]
+          node["tags"][j][0] == currFilter[0] &&
+          node["tags"][j][1] == currFilter[1]
         ) {
           return true;
         }
       }
 
-      for (let i = 0; i < node["mood"].length; i++) {
-        // Checking if node mood is equal to currFilter
-        if (node["mood"].includes(currFilter)) {
-          return true;
-        }
+      if (node["mood"].includes(currFilter)) {
+        return true;
       }
     }
 
@@ -340,6 +338,31 @@ const MainPage = ({
     return false;
   };
 
+  //^ traverses tree for selected filters and pushes into an array (AND Filtering)
+  const traverseTreeFilters_AND = (node: node, filters: any[], res: any[]) => {
+    for(let i = 0; i < filters.length; i++){
+        const currFilter = filters[i];
+
+        if(res.includes(currFilter)){
+            continue;
+        }
+
+        for(let j = 0; j < node.tags.length; j++){
+            if(currFilter[0] == node.tags[j][0] && currFilter[1] == node.tags[j][1]){
+                res.push(currFilter);
+            }
+        };
+
+        if(node.mood.includes(currFilter)){
+            res.push(currFilter);
+        }
+    }
+
+    for(let i = 0; i < node.children.length; i++){
+        traverseTreeFilters_AND(node.children[i], filters, res);
+    }
+  }
+
   //^ called when clicking enter in the search bar -> sets filteredArray to array of filtered pages to show correct pages based on filters and or text
   const searchForDays = (e) => {
     e.preventDefault();
@@ -349,7 +372,8 @@ const MainPage = ({
     if (searchText === "" && selectedFilters.length == 0) {
       //? No Filters + No Text = Reset Filters
       resetFilters();
-    } else if (searchText != "" && selectedFilters.length == 0) {
+    } 
+    else if (searchText != "" && selectedFilters.length == 0) {
       //? Search Text + No Filters -> looking for text in tree, title + details
       for (let i = 0; i < pages.length; i++) {
         const currTree = pages[i]["node"];
@@ -363,7 +387,8 @@ const MainPage = ({
       }
       setFilteredArray(filteredDays); // Output array with all the pages that have the inputted search text
       setShowFilteredArray(true);
-    } else if (searchText != "" && selectedFilters.length > 0) {
+    } 
+    else if (searchText != "" && selectedFilters.length > 0) {
       //? Search Text + Filter(s)
       for (let i = 0; i < pages.length; i++) {
         const currTree = pages[i]["node"];
@@ -384,7 +409,8 @@ const MainPage = ({
 
       setFilteredArray(filteredDays);
       setShowFilteredArray(true);
-    } else if (searchText === "" && selectFilter.length > 0) {
+    } 
+    else if (searchText === "" && selectFilter.length > 0) {
       //? No Search Text + Filters Present
       for (let i = 0; i < pages.length; i++) {
         const currTree = pages[i]["node"];
@@ -397,6 +423,76 @@ const MainPage = ({
       setShowFilteredArray(true);
     }
   };
+
+  //^ called when clicking enter in search bar -> uses AND filtering to find pages (specific search)
+  const searchForDays_AND = (e) => {
+    e.preventDefault();
+
+    const filteredDays = [];
+
+    if (searchText === "" && selectedFilters.length == 0) {
+      //? No Filters + No Text = Reset Filters
+      resetFilters();
+    } 
+    else if (searchText != "" && selectedFilters.length == 0) {
+      //? Search Text + No Filters -> looking for text in tree, title + details
+      for (let i = 0; i < pages.length; i++) {
+        const currTree = pages[i]["node"];
+        if (
+          traverseTreeSearchText(searchText.toLowerCase(), currTree) ||
+          pages[i]["title"].toLowerCase().includes(searchText.toLowerCase()) ||
+          pages[i]["details"].toLowerCase().includes(searchText.toLowerCase())
+        ) {
+          filteredDays.push(pages[i]);
+        }
+      }
+      setFilteredArray(filteredDays); // Output array with all the pages that have the inputted search text
+      setShowFilteredArray(true);
+    } 
+    else if (searchText != "" && selectedFilters.length > 0) {
+      //? Search Text + Filter(s)
+      for (let i = 0; i < pages.length; i++) {
+        const currTree = pages[i]["node"];
+
+        const searchTextFound: boolean = traverseTreeSearchText(searchText.toLowerCase(), currTree) ||
+        pages[i]["title"]
+          .toLowerCase()
+          .includes(searchText.toLowerCase()) ||
+        pages[i]["details"]
+          .toLowerCase()
+          .includes(searchText.toLowerCase());
+        
+        const res: any[] = [];
+
+        traverseTreeFilters_AND(currTree, selectedFilters, res);
+
+        if(res.length == selectedFilters.length && searchTextFound){
+          filteredDays.push(pages[i]);
+        }
+        
+      }
+
+      setFilteredArray(filteredDays);
+      setShowFilteredArray(true);
+    } 
+    else if (searchText === "" && selectFilter.length > 0) {
+      //? No Search Text + Filters Present
+      for (let i = 0; i < pages.length; i++) {
+        const currTree = pages[i]["node"];
+        
+        const res: any[] = [];
+
+        traverseTreeFilters_AND(currTree, selectedFilters, res);
+
+        if(res.length == selectedFilters.length){
+          filteredDays.push(pages[i]);
+        }
+      }
+
+      setFilteredArray(filteredDays);
+      setShowFilteredArray(true);
+    }
+  }
 
   //^ converts date object to correct format with zero padding
   const convertDateFormat = (date: Date) => {
@@ -680,7 +776,7 @@ const MainPage = ({
             <SearchBar
               searchText={searchText}
               setSearchText={setSearchText}
-              searchForDays={searchForDays}
+              searchForDays={andFiltering == false ? searchForDays : searchForDays_AND}
               menuOpen={menuOpen}
               setMenuOpen={setMenuOpen}
             />
@@ -841,6 +937,13 @@ const MainPage = ({
                 colorScheme="blue"
               >
                 Settings
+              </Button>
+              <Button
+                leftIcon={<FaFilter />}
+                colorScheme="yellow"
+                onClick={() => setAndFiltering(!andFiltering)}
+              >
+                {andFiltering ? "AND Filtering" : "OR Filtering"}
               </Button>
               <Button
                 onClick={() => LogOut()}
