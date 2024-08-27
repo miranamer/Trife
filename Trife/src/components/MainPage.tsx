@@ -539,7 +539,10 @@ const MainPage = ({
   //^ renders the correct pages based on all filters
   const displayPages = () => {
     if (pages.length == 0) {
-      return null;
+      return(
+      <div className='w-full h-full p-2 flex items-center justify-center text-center'>
+        <h1 className='text-xl'>Add Journal Entries</h1>
+      </div>);
     }
     if (showFilteredArray && showFilteredMonths) {
       return getArrayIntersection<page>(filteredArray, filteredMonths).map((page) => (
