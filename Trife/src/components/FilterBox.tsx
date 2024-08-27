@@ -6,17 +6,15 @@ import { IoClose, IoCloseOutline } from "react-icons/io5";
 
 type FilterBoxProps = {
   isTagFilter: boolean,
-  isMoodFilter: boolean,
   tags: string[][],
   moods: string[],
   selectedFilters: string[],
-  addSelectedTag: (tag: string[]) => void,
-  addSelectedMood: (mood: string) => void,
+  addSelectedFilter: (filter: string[] | string) => void,
   setSelectedFilter: (filter: string) => void
 }
 
 
-const FilterBox = ({isTagFilter,isMoodFilter,tags,moods,selectedFilters,addSelectedTag,addSelectedMood,setSelectedFilter} : FilterBoxProps) => {
+const FilterBox = ({isTagFilter, tags, moods, selectedFilters, addSelectedFilter, setSelectedFilter} : FilterBoxProps) => {
 
 
   return (
@@ -38,7 +36,7 @@ const FilterBox = ({isTagFilter,isMoodFilter,tags,moods,selectedFilters,addSelec
                     variant="solid"
                     colorScheme={tag[1]}
                     className="hover:cursor-pointer"
-                    onClick={() => addSelectedTag(tag)}
+                    onClick={() => addSelectedFilter(tag)}
                   >
                     <TagLabel>{tag[0]}</TagLabel>
                     {selectedFilters.includes(tag) ? <TagCloseButton /> : null}
@@ -46,7 +44,7 @@ const FilterBox = ({isTagFilter,isMoodFilter,tags,moods,selectedFilters,addSelec
                 ))
               : moods.map((mood) => (
                   <div
-                    onClick={() => addSelectedMood(mood)}
+                    onClick={() => addSelectedFilter(mood)}
                     className="hover:cursor-pointer flex gap-2 p-2 bg-[#EEE1BF] border-[#746C59] border-2 rounded-md items-center justify-center"
                   >
                     <p className="">{mood}</p>

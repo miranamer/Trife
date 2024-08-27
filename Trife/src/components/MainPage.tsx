@@ -259,23 +259,12 @@ const MainPage = ({
     removeMonthFilter();
   };
 
-  //^ adds the clicked tag to the selected filters array to allow filtering of pages with that tag
-  const addSelectedTag = (selectedTag: string[]) => {
-    if (selectedFilters.includes(selectedTag) == false) {
-      setSelectedFilters([...selectedFilters, selectedTag]); // add to curr selected filters if not already in
+  //^ adds a new filter (mood, tag) to selectedFilters Array
+  const addSelectedFilter = (filter: string[] | string) => {
+    if (!selectedFilters.includes(filter)) {
+      setSelectedFilters([...selectedFilters, filter]); // add to curr selected filters if not already in
     } else {
-      setSelectedFilters(selectedFilters.filter((curr) => curr != selectedTag)); // remove if already in
-    }
-  };
-
-  //^ adds the clicked mood to the selected filters array to allow filtering of pages by that mood
-  const addSelectedMood = (selectedMood: string) => {
-    if (selectedFilters.includes(selectedMood) == false) {
-      setSelectedFilters([...selectedFilters, selectedMood]);
-    } else {
-      setSelectedFilters(
-        selectedFilters.filter((curr) => curr != selectedMood)
-      );
+      setSelectedFilters(selectedFilters.filter((curr) => curr != filter)); // remove if already in
     }
   };
 
@@ -760,11 +749,9 @@ const MainPage = ({
 
             {selectedFilter === "tag" || selectedFilter === "mood" ? (
               <FilterBox
-                addSelectedMood={addSelectedMood}
-                addSelectedTag={addSelectedTag}
+                addSelectedFilter={addSelectedFilter}
                 selectedFilters={selectedFilters}
                 isTagFilter={selectedFilter === "tag" ? true : false}
-                isMoodFilter={selectedFilter === "mood" ? true : false}
                 tags={tags}
                 moods={moods}
                 setSelectedFilter={setSelectedFilter}
