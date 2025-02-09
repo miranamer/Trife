@@ -44,5 +44,5 @@ and for the choices they decided to follow through with, they can add result nod
 | Filtering Entries  | Users can filter journal entries based on tags/moods/text/date  | :white_check_mark: |
 | Chain View  | Users can chain all visible entries to see all decision trees in one view | :white_check_mark: |
 | Pan and Zoom on Tree View  | Users can pan and zoom on the tree view page to easily view large trees | :x: |
-| AI Advice  | Users can ask an LLM for advice on what choices they should alter/make based on their journal entries. | :x: |
+| AI Advice  | Users can ask an LLM for advice on what choices they should alter/make based on their journal entries. | :white_check_mark: |
 | Custom UI Themes  | Users can make and add custom UI themes. | :x: |
